@@ -30,9 +30,19 @@ slice 기반 레이어는 `<layer>/<slice>/...` 구조를 강제합니다.
 예약어(직접 사용 불가):
 `ui`, `model`, `lib`, `utils`, `config`, `types`, `constants`, `assets`, `styles`, `hooks`
 
+옵션:
+```js
+options: { reservedSegments: ["custom"] }
+```
+
 ### @patternier/segment-no-usage
 slice 아래에 `<segment>` 폴더를 강제합니다.  
 구조: `<layer>/<slice>/<segment>/...`
+
+옵션:
+```js
+options: { segments: ["custom"] }
+```
 
 ---
 

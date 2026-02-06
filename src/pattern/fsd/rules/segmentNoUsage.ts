@@ -4,10 +4,14 @@ type SegmentNoUsageContext = {
   file: { relPath: string; layer: string };
 };
 
+type SegmentNoUsageOptions = {
+  segments?: string[];
+};
+
 const RULE_ID = "@patternier/segment-no-usage";
 
 const TARGET_LAYERS = new Set(["features", "pages", "entities", "widgets", "apps"]);
-const RESERVED_SEGMENTS = new Set([
+const DEFAULT_SEGMENTS = [
   "ui",
   "model",
   "lib",
@@ -98,24 +102,28 @@ const RESERVED_SEGMENTS = new Set([
   "vendor",
   "generated",
   "__generated__",
-]);
+];
 
-function hasMissingSegment(relPath: string, layer: string) {
+function hasMissingSegment(relPath: string, layer: string, segments: Set<string>) {
   const parts = relPath.split("/").filter(Boolean);
   if (!layer || !TARGET_LAYERS.has(layer)) return false;
 
   const segment = parts[2];
   if (!segment) return true;
   if (segment.includes(".")) return true;
-  if (!RESERVED_SEGMENTS.has(segment)) return true;
+  if (!segments.has(segment)) return true;
 
   return false;
 }
 
-export function segmentNoUsageRule(ctx: SegmentNoUsageContext) {
+export function segmentNoUsageRule(ctx: SegmentNoUsageContext, opts?: SegmentNoUsageOptions) {
   const diags: { ruleId: string; message: string; loc: Loc }[] = [];
+  const segments = new Set([
+    ...DEFAULT_SEGMENTS,
+    ...(opts?.segments ?? []),
+  ]);
 
-  if (!hasMissingSegment(ctx.file.relPath, ctx.file.layer)) return diags;
+  if (!hasMissingSegment(ctx.file.relPath, ctx.file.layer, segments)) return diags;
 
   diags.push({
     ruleId: RULE_ID,
