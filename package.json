@@ -27,5 +27,13 @@
     "@swc/core": "^1.15.11",
     "@swc/helpers": "^0.5.18",
     "picomatch": "^4.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ksh5324/patternier.git"
+  },
+  "homepage": "https://github.com/ksh5324/patternier",
+  "bugs": {
+    "url": "https://github.com/ksh5324/patternier/issues"
   }
 }
