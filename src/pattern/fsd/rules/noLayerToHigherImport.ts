@@ -19,7 +19,7 @@ export type NoLayerToHigherImportOptions = {
 export function noLayerToHigherImportRule(
   ctx: {
     file: { relPath: string; layer: string; slice: string | null };
-    imports: { source: string | null; loc: Loc }[];
+    imports: { source: string | null; loc: Loc; target?: { layer: LayerName } | null }[];
   },
   opts: NoLayerToHigherImportOptions
 ): Diagnostic[] {
@@ -33,7 +33,7 @@ export function noLayerToHigherImportRule(
     const src = im.source;
     if (!src) continue;
 
-    const target = extractTargetFromSource(src);
+    const target = im.target ?? extractTargetFromSource(src);
     if (!target) continue;
 
     const toIdx = getLayerIndex(target.layer, opts.order);

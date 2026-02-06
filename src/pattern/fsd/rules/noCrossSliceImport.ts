@@ -17,7 +17,7 @@ export type NoCrossSliceImportOptions = {
 export function noCrossSliceImportRule(
   ctx: {
     file: { relPath: string; layer: string; slice: string | null };
-    imports: { source: string | null; loc: Loc }[];
+    imports: { source: string | null; loc: Loc; target?: { layer: string; slice: string | null } | null }[];
   },
   opts: NoCrossSliceImportOptions
 ): Diagnostic[] {
@@ -33,7 +33,7 @@ export function noCrossSliceImportRule(
     const src = im.source;
     if (!src) continue;
 
-    const target = extractTargetFromSource(src);
+    const target = im.target ?? extractTargetFromSource(src);
     if (!target) continue;
 
     // 같은 layer 내에서 slice가 다른 곳으로 가는 것만 금지

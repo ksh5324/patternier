@@ -2,11 +2,15 @@
 > patternier@ dev /Users/seonghun/dev/patternier
 > tsx src/cli.ts check
 
+features/a/index.ts:2:2  @patternier/no-layer-to-higher-import  features cannot import from higher layer pages.
 features/a/index.ts:1:2  @patternier/no-cross-slice-import  features/a cannot import from features/b. Use shared/entities or expose via public API.
-features/a/model/Presentation.tsx:3:11  @patternier/model-no-presentation  model cannot use JSX. Keep model layer pure.
-features/a/model/Presentation.tsx:2:18  @patternier/model-no-presentation  model cannot use template literals. Keep model layer pure.
+features/a/index.ts:1:2  @patternier/no-deep-import  deep import is not allowed. Max depth is 3.
+features/a/model/Presentation.tsx:4:10  @patternier/model-no-presentation  model cannot use JSX. Keep model layer pure.
+features/a/model/Presentation.tsx:3:17  @patternier/model-no-presentation  model cannot use template literals. Keep model layer pure.
+features/a/model/Presentation.tsx:0:0  @patternier/use-client-only-ui  "use client" is only allowed under ui paths.
 features/a/ui/Example.tsx:1:2  @patternier/ui-no-side-effects  ui cannot use fetch/axios. Move side-effects to api/model layer.
 features/a/ui/Example.tsx:4:4  @patternier/ui-no-side-effects  ui cannot use fetch/axios. Move side-effects to api/model layer.
 features/b/index.ts:2:2  @patternier/no-layer-to-higher-import  features cannot import from higher layer pages.
 pages/c.ts:0:0  @patternier/slice-no-usage  layer requires a slice folder: <layer>/<slice>/...
+useClient.tsx:0:0  @patternier/use-client-only-ui  "use client" is only allowed under ui paths.
  ELIFECYCLE  Command failed with exit code 1.

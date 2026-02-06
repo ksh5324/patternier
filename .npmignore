@@ -1,0 +1,14 @@
+src/
+fixtures/
+node_modules/
+.idea/
+.vscode/
+.github/
+.git/
+.gitignore
+tsconfig.json
+tsup.config.ts
+pnpm-lock.yaml
+patternier.config.mjs
+patternier.log
+README_EN.md

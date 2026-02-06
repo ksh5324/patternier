@@ -10,6 +10,8 @@ export const config = definePatternConfig({
   rules: {
     "@patternier/no-layer-to-higher-import": "error",
     "@patternier/no-cross-slice-import": "error",
-    "@patternier/model-no-presentation": "error"
+    "@patternier/model-no-presentation": "error",
+    "@patternier/use-client-only-ui": "error",
+    "@patternier/no-deep-import": "error"
   }
 });

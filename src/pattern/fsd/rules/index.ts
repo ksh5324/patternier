@@ -3,6 +3,8 @@ import { noCrossSliceImportRule } from "./noCrossSliceImport";
 import { uiNoSideEffectsRule } from "./uiNoSideEffects";
 import { sliceNoUsageRule } from "./sliceNoUsage";
 import { modelNoPresentationRule } from "./modelNoPresentation";
+import { useClientOnlyUiRule } from "./useClientOnlyUi";
+import { noDeepImportRule } from "./noDeepImport";
 import type { RuleSetting } from "@/config/rules";
 
 export type FsdRuleSettings = Partial<{
@@ -16,6 +18,10 @@ export type FsdRuleSettings = Partial<{
   "@patternier/slice-no-usage": RuleSetting;
   /** Disallow JSX/template literals inside model paths (opt-in). */
   "@patternier/model-no-presentation": RuleSetting;
+  /** Allow "use client" only under ui paths. Options: { allow?: string[]; exclude?: string[] } */
+  "@patternier/use-client-only-ui": RuleSetting;
+  /** Disallow deep imports beyond maxDepth (default: 3). */
+  "@patternier/no-deep-import": RuleSetting;
 }>;
 
 export const fsdRuleRegistry = {
@@ -49,6 +55,20 @@ export const fsdRuleRegistry = {
     run: modelNoPresentationRule,
     default: {
         level: "off",
+    }
+  },
+  "@patternier/use-client-only-ui": {
+    run: useClientOnlyUiRule,
+    default: {
+        level: "off",
+        options: { allow: ["**/ui/**"] }
+    }
+  },
+  "@patternier/no-deep-import": {
+    run: noDeepImportRule,
+    default: {
+        level: "off",
+        options: { maxDepth: 3 }
     }
   }
 }

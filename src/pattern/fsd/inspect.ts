@@ -6,8 +6,12 @@ import { DEFAULT_FSD_LAYER_ORDER } from "./constants";
 import { shouldSkipByLayer } from "./utils/shouldSkipByLayer";
 import { normalizeRuleSetting } from "./utils/nomalizeRule";
 import { fsdRuleRegistry } from "./rules";
+import { resolveImportSource } from "@/utils/resolveImport";
 
-export async function inspectFile(absPath: string, ctx: { analysisRoot: string; config: PatternConfig }) {
+export async function inspectFile(
+  absPath: string,
+  ctx: { repoRoot: string; analysisRoot: string; config: PatternConfig }
+) {
   const file = getFsMeta(absPath, ctx.analysisRoot);
   const parsed = await parseFile(absPath);
 
@@ -15,6 +19,14 @@ export async function inspectFile(absPath: string, ctx: { analysisRoot: string; 
   const layerOrder = ctx.config.layers?.order ?? DEFAULT_FSD_LAYER_ORDER;
 
   const diagnostics: any[] = [];
+
+  const resolvedImports = await Promise.all(
+    parsed.imports.map(async (im) => {
+      const resolvedPath = await resolveImportSource(im.source, absPath, ctx.repoRoot);
+      const target = resolvedPath ? getFsMeta(resolvedPath, ctx.analysisRoot) : null;
+      return { ...im, resolvedPath, target };
+    })
+  );
 
   const userRules = ctx.config.rules ?? {};
 
@@ -42,7 +54,7 @@ export async function inspectFile(absPath: string, ctx: { analysisRoot: string; 
     const diags = rule.run(
       {
         file,
-        imports: parsed.imports,
+        imports: resolvedImports,
         fetchCalls: parsed.fetchCalls,
         parsed,
       },

@@ -1,2 +1,3 @@
-import { x } from "@/features/b/index"; // or "@/features/b/index"
+import { x } from "@/features/b/ui/components/Button"; // or "@/features/b/index"
+import C from "../../pages/c";
 export const y = x;

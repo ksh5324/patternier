@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 // src/cli.ts
-import path4 from "path";
-import fs4 from "fs/promises";
+import path5 from "path";
+import fs5 from "fs/promises";
 
 // src/config/loadConfig.ts
 import path from "path";
@@ -264,7 +264,7 @@ function noLayerToHigherImportRule(ctx, opts) {
   for (const im of ctx.imports) {
     const src = im.source;
     if (!src) continue;
-    const target = extractTargetFromSource(src);
+    const target = im.target ?? extractTargetFromSource(src);
     if (!target) continue;
     const toIdx = getLayerIndex(target.layer, opts.order);
     if (toIdx === -1) continue;
@@ -290,7 +290,7 @@ function noCrossSliceImportRule(ctx, opts) {
   for (const im of ctx.imports) {
     const src = im.source;
     if (!src) continue;
-    const target = extractTargetFromSource(src);
+    const target = im.target ?? extractTargetFromSource(src);
     if (!target) continue;
     if (target.layer === fromLayer) {
       const toSlice = target.slice;
@@ -386,6 +386,55 @@ function modelNoPresentationRule(ctx) {
   return diags;
 }
 
+// src/pattern/fsd/rules/useClientOnlyUi.ts
+import picomatch from "picomatch";
+var RULE_ID4 = "@patternier/use-client-only-ui";
+var DEFAULT_ALLOW = ["**/ui/**"];
+function matches(patterns, relPath) {
+  if (!patterns || patterns.length === 0) return false;
+  return picomatch(patterns)(relPath);
+}
+function useClientOnlyUiRule(ctx, opts) {
+  const diags = [];
+  if (!ctx.parsed?.directives?.useClient) return diags;
+  const relPath = ctx.file.relPath;
+  const allow = Array.isArray(opts?.allow) ? opts?.allow : opts?.allow ? [opts.allow] : DEFAULT_ALLOW;
+  if (matches(opts?.exclude, relPath)) return diags;
+  if (matches(allow, relPath)) return diags;
+  diags.push({
+    ruleId: RULE_ID4,
+    message: '"use client" is only allowed under ui paths.',
+    loc: null
+  });
+  return diags;
+}
+
+// src/pattern/fsd/rules/noDeepImport.ts
+var RULE_ID5 = "@patternier/no-deep-import";
+function getImportDepth(src) {
+  const normalized = src.startsWith("@/") ? src.slice(2) : src;
+  const parts = normalized.split("/").filter(Boolean);
+  return parts.length;
+}
+function noDeepImportRule(ctx, opts) {
+  const diags = [];
+  const maxDepth = opts?.maxDepth ?? 3;
+  for (const im of ctx.imports) {
+    const src = im.source;
+    if (!src) continue;
+    if (src.startsWith(".")) continue;
+    const depth = getImportDepth(src);
+    if (depth > maxDepth) {
+      diags.push({
+        ruleId: RULE_ID5,
+        message: `deep import is not allowed. Max depth is ${maxDepth}.`,
+        loc: im.loc ?? null
+      });
+    }
+  }
+  return diags;
+}
+
 // src/pattern/fsd/rules/index.ts
 var fsdRuleRegistry = {
   "@patternier/no-layer-to-higher-import": {
@@ -419,8 +468,109 @@ var fsdRuleRegistry = {
     default: {
       level: "off"
     }
+  },
+  "@patternier/use-client-only-ui": {
+    run: useClientOnlyUiRule,
+    default: {
+      level: "off",
+      options: { allow: ["**/ui/**"] }
+    }
+  },
+  "@patternier/no-deep-import": {
+    run: noDeepImportRule,
+    default: {
+      level: "off",
+      options: { maxDepth: 3 }
+    }
   }
 };
+
+// src/utils/resolveImport.ts
+import fs3 from "fs";
+import path4 from "path";
+var TS_EXTS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
+var tsconfigCache = /* @__PURE__ */ new Map();
+async function loadTsconfig(repoRoot) {
+  if (tsconfigCache.has(repoRoot)) return tsconfigCache.get(repoRoot) ?? null;
+  const tsconfigPath = path4.join(repoRoot, "tsconfig.json");
+  if (!fs3.existsSync(tsconfigPath)) {
+    tsconfigCache.set(repoRoot, null);
+    return null;
+  }
+  const raw = await fs3.promises.readFile(tsconfigPath, "utf8");
+  const data = JSON.parse(raw);
+  const compilerOptions = data?.compilerOptions ?? {};
+  const baseUrl = compilerOptions.baseUrl ?? ".";
+  const paths = compilerOptions.paths ?? {};
+  const cfg = { baseUrl, paths };
+  tsconfigCache.set(repoRoot, cfg);
+  return cfg;
+}
+function tryResolveFile(absPath) {
+  if (path4.extname(absPath)) {
+    if (fs3.existsSync(absPath)) return absPath;
+  }
+  for (const ext of TS_EXTS) {
+    const cand = absPath + ext;
+    if (fs3.existsSync(cand)) return cand;
+  }
+  for (const ext of TS_EXTS) {
+    const cand = path4.join(absPath, "index" + ext);
+    if (fs3.existsSync(cand)) return cand;
+  }
+  return null;
+}
+function resolveRelative(source, fromFile) {
+  if (!source.startsWith(".")) return null;
+  const base = path4.resolve(path4.dirname(fromFile), source);
+  return tryResolveFile(base);
+}
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function resolveWithPaths(source, repoRoot, cfg) {
+  const entries = Object.entries(cfg.paths);
+  for (const [pattern, targets] of entries) {
+    if (!pattern) continue;
+    const hasStar = pattern.includes("*");
+    if (!hasStar) {
+      if (pattern === source) {
+        for (const t of targets) {
+          const absBase = path4.resolve(repoRoot, cfg.baseUrl, t);
+          const resolved = tryResolveFile(absBase);
+          if (resolved) return resolved;
+        }
+      }
+      continue;
+    }
+    const re = new RegExp("^" + escapeRegex(pattern).replace("\\*", "(.+)") + "$");
+    const m = source.match(re);
+    if (!m) continue;
+    const star = m[1] ?? "";
+    for (const t of targets) {
+      const replaced = t.replace("*", star);
+      const absBase = path4.resolve(repoRoot, cfg.baseUrl, replaced);
+      const resolved = tryResolveFile(absBase);
+      if (resolved) return resolved;
+    }
+  }
+  return null;
+}
+async function resolveImportSource(source, fromFile, repoRoot) {
+  if (!source) return null;
+  if (source.startsWith("."))
+    return resolveRelative(source, fromFile);
+  const cfg = await loadTsconfig(repoRoot);
+  if (cfg) {
+    const byPaths = resolveWithPaths(source, repoRoot, cfg);
+    if (byPaths) return byPaths;
+  }
+  if (source.startsWith("@/")) {
+    const absBase = path4.resolve(repoRoot, source.slice(2));
+    return tryResolveFile(absBase);
+  }
+  return null;
+}
 
 // src/pattern/fsd/inspect.ts
 async function inspectFile(absPath, ctx) {
@@ -428,6 +578,13 @@ async function inspectFile(absPath, ctx) {
   const parsed = await parseFile(absPath);
   const layerOrder = ctx.config.layers?.order ?? DEFAULT_FSD_LAYER_ORDER;
   const diagnostics = [];
+  const resolvedImports = await Promise.all(
+    parsed.imports.map(async (im) => {
+      const resolvedPath = await resolveImportSource(im.source, absPath, ctx.repoRoot);
+      const target = resolvedPath ? getFsMeta(resolvedPath, ctx.analysisRoot) : null;
+      return { ...im, resolvedPath, target };
+    })
+  );
   const userRules = ctx.config.rules ?? {};
   for (const [ruleId, rule] of Object.entries(fsdRuleRegistry)) {
     const userSettingRaw = userRules[ruleId];
@@ -443,7 +600,7 @@ async function inspectFile(absPath, ctx) {
     const diags = rule.run(
       {
         file,
-        imports: parsed.imports,
+        imports: resolvedImports,
         fetchCalls: parsed.fetchCalls,
         parsed
       },
@@ -473,13 +630,13 @@ function formatDiagnostic(filePath, d) {
 }
 
 // src/cli.ts
-import picomatch from "picomatch";
+import picomatch2 from "picomatch";
 
 // src/utils/readIgnoreFile.ts
-import fs3 from "fs/promises";
+import fs4 from "fs/promises";
 async function readIgnoreFile(absPath) {
   try {
-    const raw = await fs3.readFile(absPath, "utf8");
+    const raw = await fs4.readFile(absPath, "utf8");
     return raw.split(/\r?\n/g).map((l) => l.trim()).filter((l) => l.length > 0).filter((l) => !l.startsWith("#"));
   } catch (e) {
     if (e?.code === "ENOENT") return [];
@@ -509,29 +666,29 @@ var DEFAULT_IGNORES = [
   "**/.git/**"
 ];
 function normalizeRel(p) {
-  return p.replaceAll(path4.sep, "/");
+  return p.replaceAll(path5.sep, "/");
 }
 function makeIsIgnored(ignores) {
-  const matcher = picomatch(ignores);
+  const matcher = picomatch2(ignores);
   return (relPath) => matcher(relPath);
 }
 async function listSourceFiles(dir, opts) {
   const out = [];
   async function walk(current) {
-    const entries = await fs4.readdir(current, { withFileTypes: true });
+    const entries = await fs5.readdir(current, { withFileTypes: true });
     for (const e of entries) {
       if (e.name === "node_modules" || e.name === "dist" || e.name === ".git") continue;
-      const full = path4.join(current, e.name);
+      const full = path5.join(current, e.name);
       if (e.isDirectory()) {
-        const relDir = normalizeRel(path4.relative(dir, full));
+        const relDir = normalizeRel(path5.relative(dir, full));
         if (opts.isIgnored(relDir) || opts.isIgnored(relDir + "/**")) continue;
         await walk(full);
         continue;
       }
       if (e.isFile()) {
-        const ext = path4.extname(e.name).toLowerCase();
+        const ext = path5.extname(e.name).toLowerCase();
         if (!SOURCE_EXTS.has(ext)) continue;
-        const relFile = normalizeRel(path4.relative(dir, full));
+        const relFile = normalizeRel(path5.relative(dir, full));
         if (opts.isIgnored(relFile)) continue;
         out.push(full);
       }
@@ -545,9 +702,9 @@ async function main() {
   if (!cmd) return usage();
   const repoRoot = cwd;
   const config = await loadConfig(repoRoot);
-  const analysisRoot = path4.join(repoRoot, config.rootDir ?? ".");
+  const analysisRoot = path5.join(repoRoot, config.rootDir ?? ".");
   const userIgnores = config.ignores ?? [];
-  const ignoreFilePatterns = await readIgnoreFile(path4.join(repoRoot, ".patternierignore"));
+  const ignoreFilePatterns = await readIgnoreFile(path5.join(repoRoot, ".patternierignore"));
   const ignores = [
     ...DEFAULT_IGNORES,
     ...ignoreFilePatterns,
@@ -556,12 +713,12 @@ async function main() {
   const isIgnored = makeIsIgnored(ignores);
   const ctx = { repoRoot, analysisRoot, config };
   async function resolveFileArg(p) {
-    const absPath = path4.isAbsolute(p) ? p : path4.join(repoRoot, p);
-    const ext = path4.extname(absPath).toLowerCase();
+    const absPath = path5.isAbsolute(p) ? p : path5.join(repoRoot, p);
+    const ext = path5.extname(absPath).toLowerCase();
     if (!SOURCE_EXTS.has(ext)) {
       throw new Error(`Unsupported file extension: ${ext}`);
     }
-    const st = await fs4.stat(absPath);
+    const st = await fs5.stat(absPath);
     if (!st.isFile()) {
       throw new Error(`Not a file: ${absPath}`);
     }
@@ -590,7 +747,7 @@ async function main() {
         process.exitCode = 1;
         return;
       }
-      const rel = normalizeRel(path4.relative(analysisRoot, absPath));
+      const rel = normalizeRel(path5.relative(analysisRoot, absPath));
       if (rel.startsWith("..")) {
         targets = [absPath];
       } else if (!isIgnored(rel)) {

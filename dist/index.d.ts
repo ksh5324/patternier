@@ -17,6 +17,10 @@ type FsdRuleSettings = Partial<{
     "@patternier/slice-no-usage": RuleSetting;
     /** Disallow JSX/template literals inside model paths (opt-in). */
     "@patternier/model-no-presentation": RuleSetting;
+    /** Allow "use client" only under ui paths. Options: { allow?: string[]; exclude?: string[] } */
+    "@patternier/use-client-only-ui": RuleSetting;
+    /** Disallow deep imports beyond maxDepth (default: 3). */
+    "@patternier/no-deep-import": RuleSetting;
 }>;
 
 type PatternType = "fsd";
