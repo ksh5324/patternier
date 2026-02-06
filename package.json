@@ -1,0 +1,30 @@
+{
+  "name": "patternier",
+  "type": "module",
+  "bin": {
+    "patternier": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "dev": "tsx src/cli.ts",
+    "inspect": "tsx src/cli.ts inspect",
+    "build": "tsup",
+    "prepublishOnly": "pnpm build"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.1",
+    "@types/picomatch": "^4.0.2",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@swc/core": "^1.15.11",
+    "@swc/helpers": "^0.5.18",
+    "picomatch": "^4.0.3"
+  }
+}

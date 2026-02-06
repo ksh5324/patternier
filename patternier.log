@@ -1,0 +1,6 @@
+
+> patternier@ dev /Users/kangseonghun/test/patternier
+> tsx src/cli.ts check
+
+features/a/index.ts:1:2  @patternier/no-cross-slice-import  features/a cannot import from features/b. Use shared/entities or expose via public API.
+ ELIFECYCLE  Command failed with exit code 1.
