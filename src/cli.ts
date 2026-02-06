@@ -105,15 +105,33 @@ async function main() {
 
   const ctx = { repoRoot, analysisRoot, config };
 
+  async function resolveFileArg(p: string) {
+    const absPath = path.isAbsolute(p) ? p : path.join(repoRoot, p);
+    const ext = path.extname(absPath).toLowerCase();
+    if (!SOURCE_EXTS.has(ext)) {
+      throw new Error(`Unsupported file extension: ${ext}`);
+    }
+    const st = await fs.stat(absPath);
+    if (!st.isFile()) {
+      throw new Error(`Not a file: ${absPath}`);
+    }
+    return absPath;
+  }
+
   if (cmd === "inspect") {
     if (!fileArg) return usage();
 
-    const absPath = path.isAbsolute(fileArg) ? fileArg : path.join(repoRoot, fileArg);
+    try {
+      const absPath = await resolveFileArg(fileArg);
 
-    // inspect는 보통 강제 분석이 편하지만, 원하면 ignore도 적용 가능
-    // 여기서는 "inspect는 무조건 실행"으로 둔다.
-    const result = await inspectByType(config.type, absPath, ctx);
-    process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+      // inspect는 보통 강제 분석이 편하지만, 원하면 ignore도 적용 가능
+      // 여기서는 "inspect는 무조건 실행"으로 둔다.
+      const result = await inspectByType(config.type, absPath, ctx);
+      process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+    } catch (e: any) {
+      console.error(e?.message || e);
+      process.exitCode = 1;
+    }
     return;
   }
 
@@ -121,7 +139,14 @@ async function main() {
     let targets: string[] = [];
 
     if (fileArg) {
-      const absPath = path.isAbsolute(fileArg) ? fileArg : path.join(repoRoot, fileArg);
+      let absPath: string;
+      try {
+        absPath = await resolveFileArg(fileArg);
+      } catch (e: any) {
+        console.error(e?.message || e);
+        process.exitCode = 1;
+        return;
+      }
 
       // ✅ check <file>도 ignores 적용 (원하면 나중에 --no-ignore 추가)
       const rel = normalizeRel(path.relative(analysisRoot, absPath));
@@ -143,8 +168,15 @@ async function main() {
     let hasError = false;
 
     for (const absPath of targets) {
-      const result = await inspectByType(config.type, absPath, ctx);
-      const diags = result.diagnostics ?? [];
+      let result: any;
+      try {
+        result = await inspectByType(config.type, absPath, ctx);
+      } catch (e: any) {
+        hasError = true;
+        console.error(e?.message || e);
+        continue;
+      }
+      const diags = result?.diagnostics ?? [];
 
       if (diags.length > 0) {
         hasError = true;
