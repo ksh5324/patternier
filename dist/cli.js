@@ -44,29 +44,61 @@ import * as swc from "@swc/core";
 
 // src/utils/makeOffsetToLoc.ts
 function makeOffsetToLoc(code) {
-  const lineStartOffsets = [0];
-  for (let i = 0; i < code.length; i++) {
-    if (code[i] === "\n") lineStartOffsets.push(i + 1);
+  const lineStartByteOffsets = [0];
+  const lineStartCodeUnitOffsets = [0];
+  const charByteOffsets = [];
+  const charCodeUnitOffsets = [];
+  let byteOffset = 0;
+  let codeUnitOffset = 0;
+  for (const ch of code) {
+    charByteOffsets.push(byteOffset);
+    charCodeUnitOffsets.push(codeUnitOffset);
+    const byteLen = Buffer.byteLength(ch, "utf8");
+    const codeUnitLen = ch.length;
+    if (ch === "\n") {
+      lineStartByteOffsets.push(byteOffset + byteLen);
+      lineStartCodeUnitOffsets.push(codeUnitOffset + codeUnitLen);
+    }
+    byteOffset += byteLen;
+    codeUnitOffset += codeUnitLen;
   }
-  function offsetToLoc(offset) {
-    let lo = 0, hi = lineStartOffsets.length - 1;
+  function byteOffsetToCodeUnitOffset(offset) {
+    let lo = 0;
+    let hi = charByteOffsets.length - 1;
+    let idx = -1;
     while (lo <= hi) {
       const mid = lo + hi >> 1;
-      if (lineStartOffsets[mid] <= offset) lo = mid + 1;
+      if (charByteOffsets[mid] <= offset) {
+        idx = mid;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
+    }
+    return idx >= 0 ? charCodeUnitOffsets[idx] : 0;
+  }
+  function offsetToLoc(offset) {
+    let lo = 0;
+    let hi = lineStartByteOffsets.length - 1;
+    while (lo <= hi) {
+      const mid = lo + hi >> 1;
+      if (lineStartByteOffsets[mid] <= offset) lo = mid + 1;
       else hi = mid - 1;
     }
     const lineIndex = Math.max(0, lo - 1);
     const line = lineIndex + 1;
-    const col = offset - lineStartOffsets[lineIndex] + 1;
+    const codeUnitAt = byteOffsetToCodeUnitOffset(offset);
+    const col = codeUnitAt - lineStartCodeUnitOffsets[lineIndex] + 1;
     return { line, col };
   }
   return { offsetToLoc };
 }
 
 // src/core/parse.ts
-function locFromSpan(span, offsetToLoc) {
+function locFromSpan(span, offsetToLoc, baseOffset) {
   if (!span || typeof span.start !== "number") return null;
-  return offsetToLoc(span.start);
+  const relOffset = span.start - baseOffset + 1;
+  return offsetToLoc(relOffset > 0 ? relOffset : span.start);
 }
 async function parseFile(absPath) {
   const code = await fs2.readFile(absPath, "utf8");
@@ -80,6 +112,7 @@ async function parseFile(absPath) {
     decorators: true,
     dynamicImport: true
   });
+  const baseOffset = ast.span?.start ?? 1;
   const imports = [];
   const exports = [];
   const requires = [];
@@ -100,7 +133,7 @@ async function parseFile(absPath) {
           local: s.local?.value ?? null,
           imported: s.imported?.value ?? null
         })),
-        loc: locFromSpan(stmt.span, offsetToLoc)
+        loc: locFromSpan(stmt.span, offsetToLoc, baseOffset)
       });
       continue;
     }
@@ -108,7 +141,7 @@ async function parseFile(absPath) {
       exports.push({
         kind: "exportAll",
         source: stmt.source?.value ?? null,
-        loc: locFromSpan(stmt.span, offsetToLoc)
+        loc: locFromSpan(stmt.span, offsetToLoc, baseOffset)
       });
       continue;
     }
@@ -121,7 +154,7 @@ async function parseFile(absPath) {
           local: s.orig?.value ?? null,
           exported: s.exported?.value ?? null
         })),
-        loc: locFromSpan(stmt.span, offsetToLoc)
+        loc: locFromSpan(stmt.span, offsetToLoc, baseOffset)
       });
       continue;
     }
@@ -285,6 +318,8 @@ async function inspectByType(type, absPath, ctx) {
   switch (type) {
     case "fsd":
       return inspectFile(absPath, ctx);
+    default:
+      return inspectFile(absPath, ctx);
   }
 }
 
@@ -377,17 +412,41 @@ async function main() {
   ];
   const isIgnored = makeIsIgnored(ignores);
   const ctx = { repoRoot, analysisRoot, config };
+  async function resolveFileArg(p) {
+    const absPath = path4.isAbsolute(p) ? p : path4.join(repoRoot, p);
+    const ext = path4.extname(absPath).toLowerCase();
+    if (!SOURCE_EXTS.has(ext)) {
+      throw new Error(`Unsupported file extension: ${ext}`);
+    }
+    const st = await fs4.stat(absPath);
+    if (!st.isFile()) {
+      throw new Error(`Not a file: ${absPath}`);
+    }
+    return absPath;
+  }
   if (cmd === "inspect") {
     if (!fileArg) return usage();
-    const absPath = path4.isAbsolute(fileArg) ? fileArg : path4.join(repoRoot, fileArg);
-    const result = await inspectByType(config.type, absPath, ctx);
-    process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+    try {
+      const absPath = await resolveFileArg(fileArg);
+      const result = await inspectByType(config.type, absPath, ctx);
+      process.stdout.write(JSON.stringify(result, null, 2) + "\n");
+    } catch (e) {
+      console.error(e?.message || e);
+      process.exitCode = 1;
+    }
     return;
   }
   if (cmd === "check") {
     let targets = [];
     if (fileArg) {
-      const absPath = path4.isAbsolute(fileArg) ? fileArg : path4.join(repoRoot, fileArg);
+      let absPath;
+      try {
+        absPath = await resolveFileArg(fileArg);
+      } catch (e) {
+        console.error(e?.message || e);
+        process.exitCode = 1;
+        return;
+      }
       const rel = normalizeRel(path4.relative(analysisRoot, absPath));
       if (rel.startsWith("..")) {
         targets = [absPath];
@@ -402,8 +461,15 @@ async function main() {
     }
     let hasError = false;
     for (const absPath of targets) {
-      const result = await inspectByType(config.type, absPath, ctx);
-      const diags = result.diagnostics ?? [];
+      let result;
+      try {
+        result = await inspectByType(config.type, absPath, ctx);
+      } catch (e) {
+        hasError = true;
+        console.error(e?.message || e);
+        continue;
+      }
+      const diags = result?.diagnostics ?? [];
       if (diags.length > 0) {
         hasError = true;
         for (const d of diags) {

@@ -6,10 +6,12 @@ import { makeOffsetToLoc } from "@/utils/makeOffsetToLoc";
 
 function locFromSpan(
   span: any,
-  offsetToLoc: (n: number) => { line: number; col: number }
+  offsetToLoc: (n: number) => { line: number; col: number },
+  baseOffset: number
 ) {
   if (!span || typeof span.start !== "number") return null;
-  return offsetToLoc(span.start);
+  const relOffset = span.start - baseOffset + 1;
+  return offsetToLoc(relOffset > 0 ? relOffset : span.start);
 }
 
 export async function parseFile(absPath: string) {
@@ -27,6 +29,8 @@ export async function parseFile(absPath: string) {
     decorators: true,
     dynamicImport: true,
   } as any);
+
+  const baseOffset = (ast as any).span?.start ?? 1;
 
   const imports: any[] = [];
   const exports: any[] = [];
@@ -53,7 +57,7 @@ export async function parseFile(absPath: string) {
           local: s.local?.value ?? null,
           imported: s.imported?.value ?? null,
         })),
-        loc: locFromSpan(stmt.span, offsetToLoc),
+        loc: locFromSpan(stmt.span, offsetToLoc, baseOffset),
       });
       continue;
     }
@@ -62,7 +66,7 @@ export async function parseFile(absPath: string) {
       exports.push({
         kind: "exportAll",
         source: stmt.source?.value ?? null,
-        loc: locFromSpan(stmt.span, offsetToLoc),
+        loc: locFromSpan(stmt.span, offsetToLoc, baseOffset),
       });
       continue;
     }
@@ -76,7 +80,7 @@ export async function parseFile(absPath: string) {
           local: s.orig?.value ?? null,
           exported: s.exported?.value ?? null,
         })),
-        loc: locFromSpan(stmt.span, offsetToLoc),
+        loc: locFromSpan(stmt.span, offsetToLoc, baseOffset),
       });
       continue;
     }
