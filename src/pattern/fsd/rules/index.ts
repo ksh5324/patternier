@@ -5,6 +5,7 @@ import { sliceNoUsageRule } from "./sliceNoUsage";
 import { modelNoPresentationRule } from "./modelNoPresentation";
 import { useClientOnlyUiRule } from "./useClientOnlyUi";
 import { noDeepImportRule } from "./noDeepImport";
+import { segmentNoUsageRule } from "./segmentNoUsage";
 import type { RuleSetting } from "@/config/rules";
 
 export type FsdRuleSettings = Partial<{
@@ -22,6 +23,8 @@ export type FsdRuleSettings = Partial<{
   "@patternier/use-client-only-ui": RuleSetting;
   /** Disallow deep imports beyond maxDepth (default: 3). */
   "@patternier/no-deep-import": RuleSetting;
+  /** Enforce <layer>/<slice>/<segment>/... structure for slice-based layers. */
+  "@patternier/segment-no-usage": RuleSetting;
 }>;
 
 export const fsdRuleRegistry = {
@@ -69,6 +72,13 @@ export const fsdRuleRegistry = {
     default: {
         level: "off",
         options: { maxDepth: 3 }
+    }
+  },
+  "@patternier/segment-no-usage": {
+    run: segmentNoUsageRule,
+    default: {
+        level: "error",
+        exclude: ["shared"]
     }
   }
 }

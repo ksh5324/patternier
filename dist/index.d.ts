@@ -21,6 +21,8 @@ type FsdRuleSettings = Partial<{
     "@patternier/use-client-only-ui": RuleSetting;
     /** Disallow deep imports beyond maxDepth (default: 3). */
     "@patternier/no-deep-import": RuleSetting;
+    /** Enforce <layer>/<slice>/<segment>/... structure for slice-based layers. */
+    "@patternier/segment-no-usage": RuleSetting;
 }>;
 
 type PatternType = "fsd";
