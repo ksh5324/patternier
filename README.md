@@ -37,3 +37,51 @@
 
 ```bash
 pnpm add -D patternier
+```
+
+---
+
+## ESLint와의 차이, 그리고 함께 쓰는 이유
+
+ESLint가 **문법/코드 품질(syntax, correctness)** 을 다룬다면,  
+patternier는 **아키텍처/패턴(pattern, layer/slice)** 을 다룹니다.
+
+둘은 관심사가 달라서 같이 쓰면 더 좋은 개발자 경험을 줍니다.
+
+- **관심사 분리**: 문법 규칙과 아키텍처 규칙을 분리하면 유지보수가 쉽습니다.
+- **의도 표현**: ESLint로 표현하기 어려운 레이어 경계/슬라이스 규칙을 명확히 정의합니다.
+- **협업 안정성**: 아키텍처 붕괴를 CI에서 빠르게 감지할 수 있습니다.
+
+---
+
+## Zero Config (설정 없이도 동작)
+
+`patternier.config.mjs` 없이도 기본 FSD 규칙으로 바로 사용할 수 있습니다.
+
+```bash
+pnpm patternier check
+pnpm patternier inspect ./src/features/auth/index.ts
+```
+
+---
+
+## 최소 설정 예시
+
+`definePatternConfig` 타입을 제공하기 때문에, 최소한의 설정만으로도 기본 규칙을 바로 적용할 수 있습니다.
+
+```js
+// patternier.config.mjs
+import { definePatternConfig } from "patternier";
+
+export const config = definePatternConfig({
+  type: "fsd",
+});
+```
+
+---
+
+## 더 특별한 점
+
+- **아키텍처 인식 규칙**: 레이어/슬라이스 구조를 이해하고 규칙을 실행합니다.
+- **검사 대상 제어**: `.patternierignore`로 불필요한 경로를 쉽게 제외할 수 있습니다.
+- **개발/CI 친화적**: CLI 중심 워크플로우로 빠르게 통합 가능합니다.
