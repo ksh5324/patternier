@@ -36,7 +36,34 @@ export async function parseFile(absPath: string) {
   const exports: any[] = [];
   const requires: any[] = [];
   const dynamicImports: any[] = [];
+  const fetchCalls: any[] = [];
   let useClient = false;
+
+  function walk(node: any) {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      for (const n of node) walk(n);
+      return;
+    }
+
+    if (node.type === "CallExpression") {
+      const callee = node.callee;
+      const isFetchIdent = callee?.type === "Identifier" && callee.value === "fetch";
+      const isFetchMember =
+        callee?.type === "MemberExpression" &&
+        callee.property?.type === "Identifier" &&
+        callee.property.value === "fetch";
+      if (isFetchIdent || isFetchMember) {
+        fetchCalls.push({ loc: locFromSpan(node.span, offsetToLoc, baseOffset) });
+      }
+    }
+
+    for (const key of Object.keys(node)) {
+      if (key === "span") continue;
+      const value = (node as any)[key];
+      if (value && typeof value === "object") walk(value);
+    }
+  }
 
   for (const stmt of (ast as any).body ?? []) {
     if (
@@ -59,6 +86,9 @@ export async function parseFile(absPath: string) {
         })),
         loc: locFromSpan(stmt.span, offsetToLoc, baseOffset),
       });
+      if (stmt.source?.value === "axios" || stmt.source?.value?.startsWith("axios/")) {
+        fetchCalls.push({ loc: locFromSpan(stmt.span, offsetToLoc, baseOffset) });
+      }
       continue;
     }
 
@@ -86,11 +116,14 @@ export async function parseFile(absPath: string) {
     }
   }
 
+  walk(ast as any);
+
   return {
     imports,
     exports,
     requires,
     dynamicImports,
+    fetchCalls,
     directives: { useClient },
   };
 }

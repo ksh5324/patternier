@@ -1,7 +1,7 @@
 // src/inspect/fsMeta.ts
 import path from "node:path";
 
-const FSD_LAYERS = ["app", "pages", "widgets", "features", "entities", "shared"] as const;
+const FSD_LAYERS = ["app", "apps", "pages", "widgets", "features", "entities", "shared"] as const;
 
 export function getFsMeta(absPath: string, repoRoot: string) {
   const relPath = path.relative(repoRoot, absPath).replaceAll(path.sep, "/");

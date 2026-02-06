@@ -39,7 +39,10 @@ export async function inspectFile(absPath: string, ctx: { analysisRoot: string; 
     };
 
     // 5) 실행
-    const diags = rule.run({ file, imports: parsed.imports }, options);
+    const diags = rule.run(
+      { file, imports: parsed.imports, fetchCalls: parsed.fetchCalls },
+      options
+    );
 
     // 6) level 주입
     for (const d of diags) {
