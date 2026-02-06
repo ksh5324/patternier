@@ -23,7 +23,7 @@ async function loadConfig(repoRoot) {
 
 // src/pattern/fsd/fsMeta.ts
 import path2 from "path";
-var FSD_LAYERS = ["app", "pages", "widgets", "features", "entities", "shared"];
+var FSD_LAYERS = ["app", "apps", "pages", "widgets", "features", "entities", "shared"];
 function getFsMeta(absPath, repoRoot) {
   const relPath = path2.relative(repoRoot, absPath).replaceAll(path2.sep, "/");
   const parts = relPath.split("/");
@@ -117,7 +117,36 @@ async function parseFile(absPath) {
   const exports = [];
   const requires = [];
   const dynamicImports = [];
+  const fetchCalls = [];
+  const jsxUsages = [];
+  const templateLiterals = [];
   let useClient = false;
+  function walk(node) {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      for (const n of node) walk(n);
+      return;
+    }
+    if (node.type === "CallExpression") {
+      const callee = node.callee;
+      const isFetchIdent = callee?.type === "Identifier" && callee.value === "fetch";
+      const isFetchMember = callee?.type === "MemberExpression" && callee.property?.type === "Identifier" && callee.property.value === "fetch";
+      if (isFetchIdent || isFetchMember) {
+        fetchCalls.push({ loc: locFromSpan(node.span, offsetToLoc, baseOffset) });
+      }
+    }
+    if (node.type === "JSXElement" || node.type === "JSXFragment") {
+      jsxUsages.push({ loc: locFromSpan(node.span, offsetToLoc, baseOffset) });
+    }
+    if (node.type === "TemplateLiteral") {
+      templateLiterals.push({ loc: locFromSpan(node.span, offsetToLoc, baseOffset) });
+    }
+    for (const key of Object.keys(node)) {
+      if (key === "span") continue;
+      const value = node[key];
+      if (value && typeof value === "object") walk(value);
+    }
+  }
   for (const stmt of ast.body ?? []) {
     if (stmt.type === "ExpressionStatement" && stmt.expression?.type === "StringLiteral" && stmt.expression.value === "use client") {
       useClient = true;
@@ -135,6 +164,9 @@ async function parseFile(absPath) {
         })),
         loc: locFromSpan(stmt.span, offsetToLoc, baseOffset)
       });
+      if (stmt.source?.value === "axios" || stmt.source?.value?.startsWith("axios/")) {
+        fetchCalls.push({ loc: locFromSpan(stmt.span, offsetToLoc, baseOffset) });
+      }
       continue;
     }
     if (stmt.type === "ExportAllDeclaration") {
@@ -159,11 +191,15 @@ async function parseFile(absPath) {
       continue;
     }
   }
+  walk(ast);
   return {
     imports,
     exports,
     requires,
     dynamicImports,
+    fetchCalls,
+    jsxUsages,
+    templateLiterals,
     directives: { useClient }
   };
 }
@@ -270,6 +306,86 @@ function noCrossSliceImportRule(ctx, opts) {
   return diags;
 }
 
+// src/pattern/fsd/rules/uiNoSideEffects.ts
+var RULE_ID = "@patternier/ui-no-side-effects";
+function isUiFile(relPath) {
+  return relPath.split("/").includes("ui");
+}
+function uiNoSideEffectsRule(ctx) {
+  const diags = [];
+  if (!isUiFile(ctx.file.relPath)) return diags;
+  for (const fc of ctx.fetchCalls ?? []) {
+    diags.push({
+      ruleId: RULE_ID,
+      message: "ui cannot use fetch/axios. Move side-effects to api/model layer.",
+      loc: fc.loc ?? null
+    });
+  }
+  return diags;
+}
+
+// src/pattern/fsd/rules/sliceNoUsage.ts
+var RULE_ID2 = "@patternier/slice-no-usage";
+var TARGET_LAYERS = /* @__PURE__ */ new Set(["features", "pages", "entities", "widgets", "apps"]);
+var RESERVED_SEGMENTS = /* @__PURE__ */ new Set([
+  "ui",
+  "model",
+  "lib",
+  "utils",
+  "config",
+  "types",
+  "constants",
+  "assets",
+  "styles",
+  "hooks"
+]);
+function hasMissingSlice(relPath, layer) {
+  const parts = relPath.split("/").filter(Boolean);
+  if (!layer || !TARGET_LAYERS.has(layer)) return false;
+  const second = parts[1];
+  if (!second) return true;
+  if (second.includes(".")) return true;
+  if (RESERVED_SEGMENTS.has(second)) return true;
+  return false;
+}
+function sliceNoUsageRule(ctx) {
+  const diags = [];
+  if (!hasMissingSlice(ctx.file.relPath, ctx.file.layer)) return diags;
+  diags.push({
+    ruleId: RULE_ID2,
+    message: "layer requires a slice folder: <layer>/<slice>/...",
+    loc: null
+  });
+  return diags;
+}
+
+// src/pattern/fsd/rules/modelNoPresentation.ts
+var RULE_ID3 = "@patternier/model-no-presentation";
+function isModelPath(relPath) {
+  return relPath.split("/").includes("model");
+}
+function modelNoPresentationRule(ctx) {
+  const diags = [];
+  if (!isModelPath(ctx.file.relPath)) return diags;
+  const jsxLocs = ctx.parsed?.jsxUsages ?? [];
+  const tmplLocs = ctx.parsed?.templateLiterals ?? [];
+  for (const j of jsxLocs) {
+    diags.push({
+      ruleId: RULE_ID3,
+      message: "model cannot use JSX. Keep model layer pure.",
+      loc: j.loc ?? null
+    });
+  }
+  for (const t of tmplLocs) {
+    diags.push({
+      ruleId: RULE_ID3,
+      message: "model cannot use template literals. Keep model layer pure.",
+      loc: t.loc ?? null
+    });
+  }
+  return diags;
+}
+
 // src/pattern/fsd/rules/index.ts
 var fsdRuleRegistry = {
   "@patternier/no-layer-to-higher-import": {
@@ -283,6 +399,25 @@ var fsdRuleRegistry = {
     default: {
       level: "error",
       options: { layers: ["features"] }
+    }
+  },
+  "@patternier/ui-no-side-effects": {
+    run: uiNoSideEffectsRule,
+    default: {
+      level: "error"
+    }
+  },
+  "@patternier/slice-no-usage": {
+    run: sliceNoUsageRule,
+    default: {
+      level: "error",
+      exclude: ["shared"]
+    }
+  },
+  "@patternier/model-no-presentation": {
+    run: modelNoPresentationRule,
+    default: {
+      level: "off"
     }
   }
 };
@@ -305,7 +440,15 @@ async function inspectFile(absPath, ctx) {
       // 유저가 rule별로 넣은 options
       ...setting.options ?? {}
     };
-    const diags = rule.run({ file, imports: parsed.imports }, options);
+    const diags = rule.run(
+      {
+        file,
+        imports: parsed.imports,
+        fetchCalls: parsed.fetchCalls,
+        parsed
+      },
+      options
+    );
     for (const d of diags) {
       diagnostics.push({ ...d, level: setting.level });
     }

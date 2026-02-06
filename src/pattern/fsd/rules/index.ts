@@ -3,6 +3,20 @@ import { noCrossSliceImportRule } from "./noCrossSliceImport";
 import { uiNoSideEffectsRule } from "./uiNoSideEffects";
 import { sliceNoUsageRule } from "./sliceNoUsage";
 import { modelNoPresentationRule } from "./modelNoPresentation";
+import type { RuleSetting } from "@/config/rules";
+
+export type FsdRuleSettings = Partial<{
+  /** Prevent importing higher-level layers from lower-level ones. */
+  "@patternier/no-layer-to-higher-import": RuleSetting;
+  /** Block cross-slice imports within the same layer (default: features). */
+  "@patternier/no-cross-slice-import": RuleSetting;
+  /** Disallow side-effects (fetch/axios) inside ui paths. */
+  "@patternier/ui-no-side-effects": RuleSetting;
+  /** Enforce <layer>/<slice>/... structure for slice-based layers. */
+  "@patternier/slice-no-usage": RuleSetting;
+  /** Disallow JSX/template literals inside model paths (opt-in). */
+  "@patternier/model-no-presentation": RuleSetting;
+}>;
 
 export const fsdRuleRegistry = {
   "@patternier/no-layer-to-higher-import": {

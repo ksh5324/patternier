@@ -1,26 +1,32 @@
 // src/config/definePatternConfig.ts
+import type { FsdRuleSettings } from "@/pattern/fsd/rules";
+import {RuleSetting} from "@/config/rules";
+
 export type PatternType = "fsd"; // 당장은 fsd만
 
 export type LayerConfig = {
+  /** Layer order for patterns like FSD. */
   order?: readonly string[];
 };
 
+type RulesByType<T extends PatternType> = T extends "fsd" ? FsdRuleSettings : Record<string, RuleSetting[]>;
 
-export type PatternConfig = {
-  type: PatternType;
+export type PatternConfig<T extends PatternType = "fsd"> = {
+  /** Pattern type (currently only "fsd"). */
+  type: T;
+  /** Root directory to analyze. */
   rootDir?: string;
+  /** Layer-level configuration. */
   layers?: LayerConfig;
 
-  rules?: {
-    [ruleId: string]:
-      | "off"
-      | "warn"
-      | "error"
-      | { level?: "off" | "warn" | "error"; exclude?: string[]; include?: string[]; options?: any }
-  }
+  /**
+   * Rule configuration. Hover rule keys for descriptions.
+   */
+  rules?: RulesByType<T>;
   // 나중에 여기에 preset, rules, resolver, ignores... 확장
 };
 
-export function definePatternConfig<T extends PatternConfig>(cfg: T): T {
+/** Helper for typed config with hover docs. */
+export function definePatternConfig<T extends PatternType>(cfg: PatternConfig<T>): PatternConfig<T> {
   return cfg;
 }
