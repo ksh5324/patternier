@@ -2,6 +2,7 @@ import { noLayerToHigherImportRule } from "./noLayerToHigherImport";
 import { noCrossSliceImportRule } from "./noCrossSliceImport";
 import { uiNoSideEffectsRule } from "./uiNoSideEffects";
 import { sliceNoUsageRule } from "./sliceNoUsage";
+import { modelNoPresentationRule } from "./modelNoPresentation";
 
 export const fsdRuleRegistry = {
   "@patternier/no-layer-to-higher-import": {
@@ -29,5 +30,11 @@ export const fsdRuleRegistry = {
         level: "error",
         exclude: ["shared"]
     }
+  },
+  "@patternier/model-no-presentation": {
+    run: modelNoPresentationRule,
+    default: {
+        level: "off",
+    }
   }
-} as const;
+}

@@ -37,6 +37,8 @@ export async function parseFile(absPath: string) {
   const requires: any[] = [];
   const dynamicImports: any[] = [];
   const fetchCalls: any[] = [];
+  const jsxUsages: any[] = [];
+  const templateLiterals: any[] = [];
   let useClient = false;
 
   function walk(node: any) {
@@ -56,6 +58,14 @@ export async function parseFile(absPath: string) {
       if (isFetchIdent || isFetchMember) {
         fetchCalls.push({ loc: locFromSpan(node.span, offsetToLoc, baseOffset) });
       }
+    }
+
+    if (node.type === "JSXElement" || node.type === "JSXFragment") {
+      jsxUsages.push({ loc: locFromSpan(node.span, offsetToLoc, baseOffset) });
+    }
+
+    if (node.type === "TemplateLiteral") {
+      templateLiterals.push({ loc: locFromSpan(node.span, offsetToLoc, baseOffset) });
     }
 
     for (const key of Object.keys(node)) {
@@ -124,6 +134,8 @@ export async function parseFile(absPath: string) {
     requires,
     dynamicImports,
     fetchCalls,
+    jsxUsages,
+    templateLiterals,
     directives: { useClient },
   };
 }

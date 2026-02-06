@@ -40,7 +40,12 @@ export async function inspectFile(absPath: string, ctx: { analysisRoot: string; 
 
     // 5) 실행
     const diags = rule.run(
-      { file, imports: parsed.imports, fetchCalls: parsed.fetchCalls },
+      {
+        file,
+        imports: parsed.imports,
+        fetchCalls: parsed.fetchCalls,
+        parsed,
+      },
       options
     );
 

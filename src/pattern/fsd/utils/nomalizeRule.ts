@@ -1,7 +1,7 @@
 type Level = "off" | "warn" | "error";
 
 export type NormalizedRuleSetting = {
-  level: Level;
+  level: Level | string;
   include?: string[];
   exclude?: string[];
   options?: any;
