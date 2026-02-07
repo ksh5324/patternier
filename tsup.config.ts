@@ -24,6 +24,7 @@ export default defineConfig({
   external: [
     "@swc/core",
     "picomatch",
-    "ignore"
+    "ignore",
+    "@vue/compiler-sfc"
   ]
 });

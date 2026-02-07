@@ -29,6 +29,7 @@
   "dependencies": {
     "@swc/core": "^1.15.11",
     "@swc/helpers": "^0.5.18",
+    "@vue/compiler-sfc": "^3.5.12",
     "ignore": "^6.0.2",
     "picomatch": "^4.0.3"
   },

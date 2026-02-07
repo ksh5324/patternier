@@ -3,7 +3,7 @@ import type { Tsconfig } from "./types";
 import { dirEntriesCache } from "./cache";
 import fs from "node:fs/promises";
 
-const TS_EXTS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
+const TS_EXTS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".vue"];
 
 async function getDirEntries(dir: string): Promise<Set<string> | null> {
   if (dirEntriesCache.has(dir)) return dirEntriesCache.get(dir) ?? null;

@@ -2,7 +2,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import picomatch from "picomatch";
 
-export const SOURCE_EXTS = new Set([".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"]);
+export const SOURCE_EXTS = new Set([".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".vue"]);
 
 // 기본 ignore는 config가 없어도 적용
 const DEFAULT_IGNORES = [

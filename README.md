@@ -99,3 +99,9 @@ export const config = definePatternConfig({
 - **아키텍처 인식 규칙**: 레이어/슬라이스 구조를 이해하고 규칙을 실행합니다.
 - **검사 대상 제어**: `.patternierignore`로 불필요한 경로를 쉽게 제외할 수 있습니다.
 - **개발/CI 친화적**: CLI 중심 워크플로우로 빠르게 통합 가능합니다.
+
+---
+
+## 알려진 이슈
+
+- 모노레포에서 `extends`를 사용할 경우 `rootDir`이 기대대로 적용되지 않을 수 있습니다. 각 패키지의 `patternier.config.mjs`에 `rootDir`을 명시하면 안정적으로 동작합니다.
