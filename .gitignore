@@ -3,3 +3,6 @@ dist/
 .DS_Store
 patternier.log
 .idea/
+
+.idea/*
+dist/*
