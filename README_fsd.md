@@ -32,7 +32,7 @@ slice 기반 레이어는 `<layer>/<slice>/...` 구조를 강제합니다.
 
 옵션:
 ```js
-options: { reservedSegments: ["custom"] }
+options: { reservedSegments: ["custom"], targetLayers: ["features", "pages"] }
 ```
 
 ### @patternier/segment-no-usage
@@ -41,7 +41,7 @@ slice 아래에 `<segment>` 폴더를 강제합니다.
 
 옵션:
 ```js
-options: { segments: ["custom"] }
+options: { segments: ["custom"], targetLayers: ["features", "pages"] }
 ```
 
 ---
@@ -89,4 +89,17 @@ export const config = definePatternConfig({
     "@patternier/no-deep-import": "error",
   },
 });
+```
+
+---
+
+## 레이어/슬라이스 커스터마이징
+
+레이어 순서와 slice 기반 레이어를 커스터마이징할 수 있습니다.
+
+```js
+layers: {
+  order: ["app", "pages", "widgets", "features", "entities", "shared"],
+  sliceLayers: ["features", "entities", "widgets"],
+}
 ```

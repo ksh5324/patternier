@@ -1,16 +1,302 @@
 
-> patternier@ dev /Users/seonghun/dev/patternier
-> tsx src/cli.ts check
+> patternier@0.0.2 dev /Users/seonghun/dev/patternier
+> tsx src/cli.ts check --format sarif
 
-features/a/index.ts:2:2  @patternier/no-layer-to-higher-import  features cannot import from higher layer pages.
-features/a/index.ts:1:2  @patternier/no-cross-slice-import  features/a cannot import from features/b. Use shared/entities or expose via public API.
-features/a/index.ts:1:2  @patternier/no-deep-import  deep import is not allowed. Max depth is 3.
-features/a/model/Presentation.tsx:4:10  @patternier/model-no-presentation  model cannot use JSX. Keep model layer pure.
-features/a/model/Presentation.tsx:3:17  @patternier/model-no-presentation  model cannot use template literals. Keep model layer pure.
-features/a/model/Presentation.tsx:0:0  @patternier/use-client-only-ui  "use client" is only allowed under ui paths.
-features/a/ui/Example.tsx:1:2  @patternier/ui-no-side-effects  ui cannot use fetch/axios. Move side-effects to api/model layer.
-features/a/ui/Example.tsx:4:4  @patternier/ui-no-side-effects  ui cannot use fetch/axios. Move side-effects to api/model layer.
-features/b/index.ts:2:2  @patternier/no-layer-to-higher-import  features cannot import from higher layer pages.
-pages/c.ts:0:0  @patternier/slice-no-usage  layer requires a slice folder: <layer>/<slice>/...
-useClient.tsx:0:0  @patternier/use-client-only-ui  "use client" is only allowed under ui paths.
+{
+  "version": "2.1.0",
+  "$schema": "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "patternier",
+          "rules": [
+            {
+              "id": "@patternier/no-layer-to-higher-import"
+            },
+            {
+              "id": "@patternier/no-cross-slice-import"
+            },
+            {
+              "id": "@patternier/no-deep-import"
+            },
+            {
+              "id": "@patternier/segment-no-usage"
+            },
+            {
+              "id": "@patternier/model-no-presentation"
+            },
+            {
+              "id": "@patternier/use-client-only-ui"
+            },
+            {
+              "id": "@patternier/ui-no-side-effects"
+            },
+            {
+              "id": "@patternier/slice-no-usage"
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "@patternier/no-layer-to-higher-import",
+          "level": "error",
+          "message": {
+            "text": "features cannot import from higher layer pages."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "features/a/index.ts"
+                },
+                "region": {
+                  "startLine": 2,
+                  "startColumn": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "@patternier/no-cross-slice-import",
+          "level": "error",
+          "message": {
+            "text": "features/a cannot import from features/b. Use shared/entities or expose via public API."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "features/a/index.ts"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "@patternier/no-deep-import",
+          "level": "error",
+          "message": {
+            "text": "deep import is not allowed. Max depth is 3."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "features/a/index.ts"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "@patternier/segment-no-usage",
+          "level": "error",
+          "message": {
+            "text": "slice requires a segment folder: <layer>/<slice>/<segment>/..."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "features/a/index.ts"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "@patternier/model-no-presentation",
+          "level": "error",
+          "message": {
+            "text": "model cannot use JSX. Keep model layer pure."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "features/a/model/Presentation.tsx"
+                },
+                "region": {
+                  "startLine": 4,
+                  "startColumn": 10
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "@patternier/model-no-presentation",
+          "level": "error",
+          "message": {
+            "text": "model cannot use template literals. Keep model layer pure."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "features/a/model/Presentation.tsx"
+                },
+                "region": {
+                  "startLine": 3,
+                  "startColumn": 17
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "@patternier/use-client-only-ui",
+          "level": "error",
+          "message": {
+            "text": "\"use client\" is only allowed under ui paths."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "features/a/model/Presentation.tsx"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "@patternier/ui-no-side-effects",
+          "level": "error",
+          "message": {
+            "text": "ui cannot use fetch/axios. Move side-effects to api/model layer."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "features/a/ui/Example.tsx"
+                },
+                "region": {
+                  "startLine": 1,
+                  "startColumn": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "@patternier/ui-no-side-effects",
+          "level": "error",
+          "message": {
+            "text": "ui cannot use fetch/axios. Move side-effects to api/model layer."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "features/a/ui/Example.tsx"
+                },
+                "region": {
+                  "startLine": 4,
+                  "startColumn": 4
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "@patternier/no-layer-to-higher-import",
+          "level": "error",
+          "message": {
+            "text": "features cannot import from higher layer pages."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "features/b/index.ts"
+                },
+                "region": {
+                  "startLine": 2,
+                  "startColumn": 2
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "@patternier/segment-no-usage",
+          "level": "error",
+          "message": {
+            "text": "slice requires a segment folder: <layer>/<slice>/<segment>/..."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "features/b/index.ts"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "@patternier/slice-no-usage",
+          "level": "error",
+          "message": {
+            "text": "layer requires a slice folder: <layer>/<slice>/..."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "pages/c.ts"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "@patternier/segment-no-usage",
+          "level": "error",
+          "message": {
+            "text": "slice requires a segment folder: <layer>/<slice>/<segment>/..."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "pages/c.ts"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "@patternier/use-client-only-ui",
+          "level": "error",
+          "message": {
+            "text": "\"use client\" is only allowed under ui paths."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "useClient.tsx"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
  ELIFECYCLE  Command failed with exit code 1.

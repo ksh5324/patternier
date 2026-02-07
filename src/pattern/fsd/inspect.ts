@@ -32,7 +32,9 @@ export async function inspectFile(
     if (ruleId === "@patternier/use-client-only-ui") needs.useClient = true;
   }
 
-  const file = getFsMeta(absPath, ctx.analysisRoot);
+  const layerOrder = ctx.config.layers?.order ?? DEFAULT_FSD_LAYER_ORDER;
+  const sliceLayers = ctx.config.layers?.sliceLayers ?? ["features", "entities", "widgets"];
+  const file = getFsMeta(absPath, ctx.analysisRoot, layerOrder, sliceLayers);
   const parsed = await parseFile(absPath, {
     needFetchCalls: needs.fetchCalls,
     needJsx: needs.jsx,
@@ -40,14 +42,11 @@ export async function inspectFile(
     needUseClient: needs.useClient,
   });
 
-  // 룰 옵션에 들어갈 공통 컨텍스트(예: layer order)
-  const layerOrder = ctx.config.layers?.order ?? DEFAULT_FSD_LAYER_ORDER;
-
   const diagnostics: any[] = [];
 
   const resolvedImports = await mapLimit(parsed.imports as ParsedImport[], 32, async (im) => {
     const resolvedPath = await resolveImportSource(im.source, absPath, ctx.repoRoot);
-    const target = resolvedPath ? getFsMeta(resolvedPath, ctx.analysisRoot) : null;
+    const target = resolvedPath ? getFsMeta(resolvedPath, ctx.analysisRoot, layerOrder, sliceLayers) : null;
     return { ...im, resolvedPath, target };
   });
 

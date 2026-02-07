@@ -19,13 +19,18 @@ import {
 const cwd = process.cwd();
 
 async function main() {
-  const { cmd, fileArg, cliType, invalid } = parseArgs(process.argv);
+  const { cmd, fileArg, cliType, format, invalid } = parseArgs(process.argv);
 
   if (invalid) return usage();
   if (!cmd) return usage();
 
   if (cliType && cliType !== "fsd") {
     console.error(`Unknown type: ${cliType}`);
+    process.exitCode = 1;
+    return;
+  }
+  if (format && format !== "text" && format !== "json" && format !== "sarif") {
+    console.error(`Unknown format: ${format}`);
     process.exitCode = 1;
     return;
   }
@@ -73,6 +78,8 @@ async function main() {
 
   if (cmd === "check") {
     let targets: string[] = [];
+    const jsonDiags: any[] = [];
+    const sarifDiags: any[] = [];
 
     if (fileArg) {
       let absPath: string;
@@ -117,9 +124,33 @@ async function main() {
       if (diags.length > 0) {
         hasError = true;
         for (const d of diags) {
-          process.stdout.write(formatDiagnostic(result.file.relPath, d) + "\n");
+          if (format === "json") {
+            jsonDiags.push({
+              file: result.file.relPath,
+              ruleId: d.ruleId,
+              message: d.message,
+              loc: d.loc ?? null,
+              level: d.level ?? "error",
+            });
+          } else if (format === "sarif") {
+            sarifDiags.push({
+              file: result.file.relPath,
+              ruleId: d.ruleId,
+              message: d.message,
+              loc: d.loc ?? null,
+              level: d.level ?? "error",
+            });
+          } else {
+            process.stdout.write(formatDiagnostic(result.file.relPath, d) + "\n");
+          }
         }
       }
+    }
+
+    if (format === "json") {
+      process.stdout.write(JSON.stringify(jsonDiags, null, 2) + "\n");
+    } else if (format === "sarif") {
+      process.stdout.write(JSON.stringify(buildSarif(sarifDiags), null, 2) + "\n");
     }
 
     process.exitCode = hasError ? 1 : 0;
@@ -133,3 +164,43 @@ main().catch((e) => {
   console.error(e?.stack || e);
   process.exitCode = 1;
 });
+
+function buildSarif(diags: any[]) {
+  const rulesMap = new Map<string, { id: string }>();
+  const results = diags.map((d) => {
+    if (!rulesMap.has(d.ruleId)) rulesMap.set(d.ruleId, { id: d.ruleId });
+    const location: any = {
+      physicalLocation: {
+        artifactLocation: { uri: d.file },
+      },
+    };
+    if (d.loc && typeof d.loc.line === "number" && typeof d.loc.col === "number") {
+      location.physicalLocation.region = {
+        startLine: d.loc.line,
+        startColumn: d.loc.col,
+      };
+    }
+    return {
+      ruleId: d.ruleId,
+      level: d.level === "warn" ? "warning" : "error",
+      message: { text: d.message },
+      locations: [location],
+    };
+  });
+
+  return {
+    version: "2.1.0",
+    $schema: "https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0.json",
+    runs: [
+      {
+        tool: {
+          driver: {
+            name: "patternier",
+            rules: Array.from(rulesMap.values()),
+          },
+        },
+        results,
+      },
+    ],
+  };
+}

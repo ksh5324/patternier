@@ -6,11 +6,12 @@ type SliceNoUsageContext = {
 
 type SliceNoUsageOptions = {
   reservedSegments?: string[];
+  targetLayers?: string[];
 };
 
 const RULE_ID = "@patternier/slice-no-usage";
 
-const TARGET_LAYERS = new Set(["features", "pages", "entities", "widgets", "apps"]);
+const DEFAULT_TARGET_LAYERS = ["features", "pages", "entities", "widgets", "apps"];
 const DEFAULT_RESERVED_SEGMENTS = [
   "ui",
   "model",
@@ -24,9 +25,14 @@ const DEFAULT_RESERVED_SEGMENTS = [
   "hooks",
 ];
 
-function hasMissingSlice(relPath: string, layer: string, reservedSegments: Set<string>) {
+function hasMissingSlice(
+  relPath: string,
+  layer: string,
+  reservedSegments: Set<string>,
+  targetLayers: Set<string>
+) {
   const parts = relPath.split("/").filter(Boolean);
-  if (!layer || !TARGET_LAYERS.has(layer)) return false;
+  if (!layer || !targetLayers.has(layer)) return false;
 
   const second = parts[1];
   if (!second) return true;
@@ -42,8 +48,9 @@ export function sliceNoUsageRule(ctx: SliceNoUsageContext, opts?: SliceNoUsageOp
     ...DEFAULT_RESERVED_SEGMENTS,
     ...(opts?.reservedSegments ?? []),
   ]);
+  const targetLayers = new Set(opts?.targetLayers ?? DEFAULT_TARGET_LAYERS);
 
-  if (!hasMissingSlice(ctx.file.relPath, ctx.file.layer, reserved)) return diags;
+  if (!hasMissingSlice(ctx.file.relPath, ctx.file.layer, reserved, targetLayers)) return diags;
 
   diags.push({
     ruleId: RULE_ID,

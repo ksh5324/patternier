@@ -2,6 +2,7 @@ type ParsedArgs = {
   cmd?: string;
   fileArg?: string;
   cliType?: string;
+  format?: string;
   invalid?: boolean;
 };
 
@@ -10,6 +11,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let cmd: string | undefined;
   let fileArg: string | undefined;
   let cliType: string | undefined;
+  let format: string | undefined;
 
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
@@ -20,6 +22,15 @@ function parseArgs(argv: string[]): ParsedArgs {
     }
     if (a.startsWith("--type=")) {
       cliType = a.slice("--type=".length);
+      continue;
+    }
+    if (a === "--format") {
+      format = args[i + 1];
+      i++;
+      continue;
+    }
+    if (a.startsWith("--format=")) {
+      format = a.slice("--format=".length);
       continue;
     }
     if (a.startsWith("-")) {
@@ -35,7 +46,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     }
   }
 
-  return { cmd, fileArg, cliType };
+  return { cmd, fileArg, cliType, format };
 }
 
 export { parseArgs };
