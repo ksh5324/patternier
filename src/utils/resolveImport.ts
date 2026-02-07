@@ -8,6 +8,7 @@ type Tsconfig = {
 
 const TS_EXTS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
 const tsconfigCache = new Map<string, Tsconfig | null>();
+const resolveCache = new Map<string, string | null>();
 
 async function loadTsconfig(repoRoot: string): Promise<Tsconfig | null> {
   if (tsconfigCache.has(repoRoot)) return tsconfigCache.get(repoRoot) ?? null;
@@ -90,19 +91,31 @@ export async function resolveImportSource(
   repoRoot: string
 ): Promise<string | null> {
   if (!source) return null;
+  const cacheKey = fromFile + "::" + source;
+  if (resolveCache.has(cacheKey)) return resolveCache.get(cacheKey) ?? null;
   if (source.startsWith("."))
-    return resolveRelative(source, fromFile);
+    {
+      const resolved = resolveRelative(source, fromFile);
+      resolveCache.set(cacheKey, resolved);
+      return resolved;
+    }
 
   const cfg = await loadTsconfig(repoRoot);
   if (cfg) {
     const byPaths = resolveWithPaths(source, repoRoot, cfg);
-    if (byPaths) return byPaths;
+    if (byPaths) {
+      resolveCache.set(cacheKey, byPaths);
+      return byPaths;
+    }
   }
 
   if (source.startsWith("@/")) {
     const absBase = path.resolve(repoRoot, source.slice(2));
-    return tryResolveFile(absBase);
+    const resolved = tryResolveFile(absBase);
+    resolveCache.set(cacheKey, resolved);
+    return resolved;
   }
 
+  resolveCache.set(cacheKey, null);
   return null;
 }
