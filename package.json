@@ -2,6 +2,7 @@
   "name": "patternier",
   "version": "0.0.3-beta.1",
   "type": "module",
+  "license": "MIT",
   "bin": {
     "patternier": "./dist/cli.js"
   },
