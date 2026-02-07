@@ -87,6 +87,13 @@ export const config = definePatternConfig({
 
 ---
 
+## 문서
+
+- FSD 사용법: `docs/fsd.md`
+- 내부 구현 노트: `devconf/`
+
+---
+
 ## 더 특별한 점
 
 - **아키텍처 인식 규칙**: 레이어/슬라이스 구조를 이해하고 규칙을 실행합니다.
