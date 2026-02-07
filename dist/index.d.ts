@@ -40,6 +40,10 @@ type PatternConfig<T extends PatternType = "fsd"> = {
     rootDir?: string;
     /** Layer-level configuration. */
     layers?: LayerConfig;
+    /** Extend one or more base configs. */
+    extends?: string | string[];
+    /** Ignore patterns (glob). */
+    ignores?: string[];
     /**
      * Rule configuration. Hover rule keys for descriptions.
      */

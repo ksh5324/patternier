@@ -2,6 +2,7 @@
 import path from "node:path";
 import fs from "node:fs/promises";
 import { loadConfig } from "./config/loadConfig";
+import type { PatternType } from "./config/definePatternConfig";
 import { inspectByType } from "./entry/inspectByType";
 import { formatDiagnostic } from "./utils/formatDiagnostic";
 import { readIgnoreFile } from "./utils/readIgnoreFile";
@@ -36,6 +37,7 @@ async function main() {
     process.exitCode = 1;
     return;
   }
+  const cliTypeSafe: PatternType | undefined = cliType === "fsd" ? "fsd" : undefined;
   if (format && format !== "text" && format !== "json" && format !== "sarif") {
     console.error(`Unknown format: ${format}`);
     process.exitCode = 1;
@@ -50,7 +52,7 @@ async function main() {
     configExists = true;
   } catch {}
   const config = await loadConfig(repoRoot);
-  const effectiveType = configExists ? config.type : (cliType ?? config.type);
+  const effectiveType: PatternType = configExists ? config.type : (cliTypeSafe ?? config.type);
   const analysisRoot = path.join(repoRoot, config.rootDir ?? ".");
 
   const userIgnores = config.ignores ?? [];
