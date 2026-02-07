@@ -15,9 +15,12 @@ function normalizeRel(p: string) {
   return p.replaceAll(path.sep, "/");
 }
 
-function makeIsIgnored(ignores: readonly string[]) {
+function makeIsIgnored(
+  ignores: readonly string[],
+  extra?: (relPath: string) => boolean
+) {
   const matcher = picomatch(ignores as string[]);
-  return (relPath: string) => matcher(relPath);
+  return (relPath: string) => matcher(relPath) || (extra ? extra(relPath) : false);
 }
 
 async function listSourceFiles(

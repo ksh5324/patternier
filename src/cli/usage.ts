@@ -7,6 +7,8 @@ Usage:
   patternier check [file] --type fsd
   patternier check [file] --format json
   patternier check [file] --format sarif
+  patternier --help
+  patternier --version
 
 Examples:
   pnpm dev inspect fixtures/features/a/index.ts

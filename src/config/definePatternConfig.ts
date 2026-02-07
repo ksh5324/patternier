@@ -1,6 +1,6 @@
 // src/config/definePatternConfig.ts
 import type { FsdRuleSettings } from "@/pattern/fsd/rules";
-import {RuleSetting} from "@/config/rules";
+import type { RuleSetting } from "@/config/rules";
 
 export type PatternType = "fsd"; // 당장은 fsd만
 
@@ -11,7 +11,7 @@ export type LayerConfig = {
   sliceLayers?: readonly string[];
 };
 
-type RulesByType<T extends PatternType> = T extends "fsd" ? FsdRuleSettings : Record<string, RuleSetting[]>;
+type RulesByType<T extends PatternType> = T extends "fsd" ? FsdRuleSettings : Record<string, RuleSetting>;
 
 export type PatternConfig<T extends PatternType = "fsd"> = {
   /** Pattern type (currently only "fsd"). */

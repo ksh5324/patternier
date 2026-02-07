@@ -7,6 +7,7 @@ type SliceNoUsageContext = {
 type SliceNoUsageOptions = {
   reservedSegments?: string[];
   targetLayers?: string[];
+  mode?: "extend" | "replace";
 };
 
 const RULE_ID = "@patternier/slice-no-usage";
@@ -44,10 +45,11 @@ function hasMissingSlice(
 
 export function sliceNoUsageRule(ctx: SliceNoUsageContext, opts?: SliceNoUsageOptions) {
   const diags: { ruleId: string; message: string; loc: Loc }[] = [];
-  const reserved = new Set([
-    ...DEFAULT_RESERVED_SEGMENTS,
-    ...(opts?.reservedSegments ?? []),
-  ]);
+  const reserved = new Set(
+    opts?.mode === "replace"
+      ? (opts?.reservedSegments ?? [])
+      : [...DEFAULT_RESERVED_SEGMENTS, ...(opts?.reservedSegments ?? [])]
+  );
   const targetLayers = new Set(opts?.targetLayers ?? DEFAULT_TARGET_LAYERS);
 
   if (!hasMissingSlice(ctx.file.relPath, ctx.file.layer, reserved, targetLayers)) return diags;

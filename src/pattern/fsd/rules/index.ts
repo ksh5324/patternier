@@ -15,7 +15,7 @@ export type FsdRuleSettings = Partial<{
   "@patternier/no-cross-slice-import": RuleSetting;
   /** Disallow side-effects (fetch/axios) inside ui paths. */
   "@patternier/ui-no-side-effects": RuleSetting;
-  /** Enforce <layer>/<slice>/... structure for slice-based layers. Options: { reservedSegments?: string[]; targetLayers?: string[] } */
+  /** Enforce <layer>/<slice>/... structure for slice-based layers. Options: { reservedSegments?: string[]; targetLayers?: string[]; mode?: "extend" | "replace" } */
   "@patternier/slice-no-usage": RuleSetting;
   /** Disallow JSX/template literals inside model paths (opt-in). */
   "@patternier/model-no-presentation": RuleSetting;
@@ -23,7 +23,7 @@ export type FsdRuleSettings = Partial<{
   "@patternier/use-client-only-ui": RuleSetting;
   /** Disallow deep imports beyond maxDepth (default: 3). */
   "@patternier/no-deep-import": RuleSetting;
-  /** Enforce <layer>/<slice>/<segment>/... structure for slice-based layers. Options: { segments?: string[]; targetLayers?: string[] } */
+  /** Enforce <layer>/<slice>/<segment>/... structure for slice-based layers. Options: { segments?: string[]; targetLayers?: string[]; mode?: "extend" | "replace" } */
   "@patternier/segment-no-usage": RuleSetting;
 }>;
 

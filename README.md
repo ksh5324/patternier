@@ -28,7 +28,7 @@
 - ✅ 레이어 / 슬라이스 기반 아키텍처 룰
 - ✅ `patternier.config.mjs`를 통한 유연한 설정
 - ✅ FSD 프리셋 기본 제공
-- ✅ `.patternierignore` 지원
+- ✅ `.patternierignore` 지원 (gitignore 포맷)
 - ✅ CLI 기반 워크플로우 (CI 친화적)
 
 ---

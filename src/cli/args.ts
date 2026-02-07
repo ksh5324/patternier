@@ -3,6 +3,8 @@ type ParsedArgs = {
   fileArg?: string;
   cliType?: string;
   format?: string;
+  help?: boolean;
+  version?: boolean;
   invalid?: boolean;
 };
 
@@ -12,6 +14,8 @@ function parseArgs(argv: string[]): ParsedArgs {
   let fileArg: string | undefined;
   let cliType: string | undefined;
   let format: string | undefined;
+  let help = false;
+  let version = false;
 
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
@@ -33,6 +37,14 @@ function parseArgs(argv: string[]): ParsedArgs {
       format = a.slice("--format=".length);
       continue;
     }
+    if (a === "--help" || a === "-h") {
+      help = true;
+      continue;
+    }
+    if (a === "--version" || a === "-v") {
+      version = true;
+      continue;
+    }
     if (a.startsWith("-")) {
       return { invalid: true };
     }
@@ -46,7 +58,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     }
   }
 
-  return { cmd, fileArg, cliType, format };
+  return { cmd, fileArg, cliType, format, help, version };
 }
 
 export { parseArgs };

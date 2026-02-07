@@ -32,7 +32,7 @@ slice 기반 레이어는 `<layer>/<slice>/...` 구조를 강제합니다.
 
 옵션:
 ```js
-options: { reservedSegments: ["custom"], targetLayers: ["features", "pages"] }
+options: { reservedSegments: ["custom"], targetLayers: ["features", "pages"], mode: "extend" }
 ```
 
 ### @patternier/segment-no-usage
@@ -41,7 +41,7 @@ slice 아래에 `<segment>` 폴더를 강제합니다.
 
 옵션:
 ```js
-options: { segments: ["custom"], targetLayers: ["features", "pages"] }
+options: { segments: ["custom"], targetLayers: ["features", "pages"], mode: "extend" }
 ```
 
 ---

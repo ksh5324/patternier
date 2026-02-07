@@ -19,9 +19,16 @@ import {
 const cwd = process.cwd();
 
 async function main() {
-  const { cmd, fileArg, cliType, format, invalid } = parseArgs(process.argv);
+  const { cmd, fileArg, cliType, format, help, version, invalid } = parseArgs(process.argv);
 
   if (invalid) return usage();
+  if (help) return usage();
+  if (version) {
+    const raw = await fs.readFile(new URL("../package.json", import.meta.url), "utf8");
+    const pkg = JSON.parse(raw);
+    console.log(pkg.version);
+    return;
+  }
   if (!cmd) return usage();
 
   if (cliType && cliType !== "fsd") {
@@ -47,15 +54,14 @@ async function main() {
   const analysisRoot = path.join(repoRoot, config.rootDir ?? ".");
 
   const userIgnores = config.ignores ?? [];
-  const ignoreFilePatterns = await readIgnoreFile(path.join(repoRoot, ".patternierignore"));
+  const ignoreFileMatcher = await readIgnoreFile(path.join(repoRoot, ".patternierignore"));
 
   const ignores = [
     ...DEFAULT_IGNORES,
-    ...ignoreFilePatterns,
     ...userIgnores,
   ];
 
-  const isIgnored = makeIsIgnored(ignores);
+  const isIgnored = makeIsIgnored(ignores, ignoreFileMatcher);
 
   const ctx = { repoRoot, analysisRoot, config };
 

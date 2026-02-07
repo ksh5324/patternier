@@ -1,17 +1,19 @@
 import fs from "node:fs/promises";
+import ignore from "ignore";
 
-async function readIgnoreFile(absPath: string): Promise<string[]> {
+type IgnoreMatcher = (relPath: string) => boolean;
+
+async function readIgnoreFile(absPath: string): Promise<IgnoreMatcher> {
   try {
     const raw = await fs.readFile(absPath, "utf8");
-    return raw
-      .split(/\r?\n/g)
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0)
-      .filter((l) => !l.startsWith("#"));
+    const ig = ignore();
+    ig.add(raw);
+    return (relPath: string) => ig.ignores(relPath);
   } catch (e: any) {
-    if (e?.code === "ENOENT") return [];
+    if (e?.code === "ENOENT") return () => false;
     throw e;
   }
 }
 
 export { readIgnoreFile };
+export type { IgnoreMatcher };
