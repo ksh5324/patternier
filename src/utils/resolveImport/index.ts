@@ -1,17 +1,19 @@
-import fs from "node:fs";
 import path from "node:path";
 import { resolveCache, tsconfigCache } from "./cache";
 import { resolveRelative, resolveWithPaths, tryResolveFile } from "./resolve";
 import type { Tsconfig } from "./types";
+import fs from "node:fs/promises";
 
 async function loadTsconfig(repoRoot: string): Promise<Tsconfig | null> {
   if (tsconfigCache.has(repoRoot)) return tsconfigCache.get(repoRoot) ?? null;
   const tsconfigPath = path.join(repoRoot, "tsconfig.json");
-  if (!fs.existsSync(tsconfigPath)) {
+  try {
+    await fs.access(tsconfigPath);
+  } catch {
     tsconfigCache.set(repoRoot, null);
     return null;
   }
-  const raw = await fs.promises.readFile(tsconfigPath, "utf8");
+  const raw = await fs.readFile(tsconfigPath, "utf8");
   const data = JSON.parse(raw);
   const compilerOptions = data?.compilerOptions ?? {};
   const baseUrl = compilerOptions.baseUrl ?? ".";
@@ -31,14 +33,14 @@ async function resolveImportSource(
   if (resolveCache.has(cacheKey)) return resolveCache.get(cacheKey) ?? null;
 
   if (source.startsWith(".")) {
-    const resolved = resolveRelative(source, fromFile);
+    const resolved = await resolveRelative(source, fromFile);
     resolveCache.set(cacheKey, resolved);
     return resolved;
   }
 
   const cfg = await loadTsconfig(repoRoot);
   if (cfg) {
-    const byPaths = resolveWithPaths(source, repoRoot, cfg);
+    const byPaths = await resolveWithPaths(source, repoRoot, cfg);
     if (byPaths) {
       resolveCache.set(cacheKey, byPaths);
       return byPaths;
@@ -47,7 +49,7 @@ async function resolveImportSource(
 
   if (source.startsWith("@/")) {
     const absBase = path.resolve(repoRoot, source.slice(2));
-    const resolved = tryResolveFile(absBase);
+    const resolved = await tryResolveFile(absBase);
     resolveCache.set(cacheKey, resolved);
     return resolved;
   }

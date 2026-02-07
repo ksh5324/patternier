@@ -45,13 +45,11 @@ export async function inspectFile(
 
   const diagnostics: any[] = [];
 
-  const resolvedImports = await Promise.all(
-    (parsed.imports as ParsedImport[]).map(async (im) => {
-      const resolvedPath = await resolveImportSource(im.source, absPath, ctx.repoRoot);
-      const target = resolvedPath ? getFsMeta(resolvedPath, ctx.analysisRoot) : null;
-      return { ...im, resolvedPath, target };
-    })
-  );
+  const resolvedImports = await mapLimit(parsed.imports as ParsedImport[], 32, async (im) => {
+    const resolvedPath = await resolveImportSource(im.source, absPath, ctx.repoRoot);
+    const target = resolvedPath ? getFsMeta(resolvedPath, ctx.analysisRoot) : null;
+    return { ...im, resolvedPath, target };
+  });
 
   for (const [ruleId, rule] of Object.entries(fsdRuleRegistry)) {
     // 1) 사용자 설정 가져오기 (없으면 default)
@@ -91,4 +89,21 @@ export async function inspectFile(
   }
 
   return { file, ...parsed, diagnostics };
+}
+
+async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>) {
+  const results: R[] = new Array(items.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (true) {
+      const current = nextIndex++;
+      if (current >= items.length) return;
+      results[current] = await fn(items[current]);
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(limit, items.length) }, () => worker());
+  await Promise.all(workers);
+  return results;
 }
