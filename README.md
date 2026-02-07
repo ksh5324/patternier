@@ -4,6 +4,7 @@
 > Feature-Sliced Design(FSD)와 구조 규칙을 CI 단계에서 강제합니다.
 
 ## ⚠️ **현재 버전: 0.0.3-beta.1 (베타)**  
+설치 시 `@0.0.3-beta.1` 버전을 명시하세요.
 
 ⚠️ **patternier는 현재 개발 중인 실험적(Early-stage) 프로젝트입니다.**  
 API, 규칙, 동작 방식은 변경될 수 있습니다.
@@ -92,9 +93,9 @@ Patternier는 이 규칙을 **자동으로 검증**합니다.
 ## 설치
 
 ```bash
-pnpm add -D patternier
+pnpm add -D patternier@0.0.3-beta.1
 # 또는
-npm install -D patternier
+npm install -D patternier@0.0.3-beta.1
 ```
 ### 기본 사용법
 
