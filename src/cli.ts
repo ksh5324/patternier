@@ -20,7 +20,7 @@ import {
 const cwd = process.cwd();
 
 async function main() {
-  const { cmd, fileArg, cliType, format, help, version, summary, printConfig, invalid } = parseArgs(process.argv);
+  const { cmd, fileArg, cliType, format, help, version, summary, printConfig, explain, invalid } = parseArgs(process.argv);
 
   if (invalid) return usage();
   if (help) return usage();
@@ -94,6 +94,7 @@ async function main() {
     const jsonDiags: any[] = [];
     const sarifDiags: any[] = [];
     const summaryCounts = new Map<string, number>();
+    const explainMap = explain ? await getExplainMap(effectiveType) : null;
 
     if (fileArg) {
       let absPath: string;
@@ -147,6 +148,7 @@ async function main() {
               message: d.message,
               loc: d.loc ?? null,
               level: d.level ?? "error",
+              explain: explainMap ? explainMap[d.ruleId] ?? null : undefined,
             });
           } else if (format === "sarif") {
             sarifDiags.push({
@@ -226,4 +228,12 @@ function buildSarif(diags: any[]) {
       },
     ],
   };
+}
+
+async function getExplainMap(type: PatternType): Promise<Record<string, string>> {
+  if (type === "fsd") {
+    const mod = await import("./pattern/fsd/rules/explain");
+    return mod.fsdRuleExplain;
+  }
+  return {};
 }
