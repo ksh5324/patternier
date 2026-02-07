@@ -4,6 +4,55 @@ FSD(Feature-Sliced Design) 패턴을 위한 기본 규칙 목록과 설정 방�
 
 ---
 
+## 사용 방법
+
+```bash
+patternier check
+patternier check --format json
+patternier check --summary
+patternier inspect ./src/features/auth/index.ts
+```
+
+---
+
+## 설정 파일
+
+지원하는 파일명:
+
+- `patternier.config.mjs`
+- `patternier.*.config.mjs` (예: `patternier.base.config.mjs`)
+
+---
+
+## 모노레포에서 사용하기
+
+루트에 베이스 설정을 두고 `extends`로 상속하세요.
+
+```js
+// patternier.base.config.mjs
+import { definePatternConfig } from "patternier";
+
+export const config = definePatternConfig({
+  type: "fsd",
+  rootDir: "src",
+  rules: {
+    "@patternier/no-layer-to-higher-import": "error",
+  },
+});
+```
+
+```js
+// packages/foo/patternier.config.mjs
+import { definePatternConfig } from "patternier";
+
+export const config = definePatternConfig({
+  extends: "../../patternier.base.config.mjs",
+  rootDir: "src",
+});
+```
+
+---
+
 ## 기본 제공 규칙
 
 아래 규칙들은 `type: "fsd"`일 때 사용 가능합니다.
@@ -79,6 +128,7 @@ import { definePatternConfig } from "patternier";
 
 export const config = definePatternConfig({
   type: "fsd",
+  rootDir: "src",
   rules: {
     "@patternier/no-layer-to-higher-import": "error",
     "@patternier/no-cross-slice-import": "error",

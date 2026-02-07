@@ -29,6 +29,7 @@
 - ✅ `patternier.config.mjs`를 통한 유연한 설정
 - ✅ FSD 프리셋 기본 제공
 - ✅ `.patternierignore` 지원 (gitignore 포맷)
+- ✅ 모노레포 `extends` 지원
 - ✅ CLI 기반 워크플로우 (CI 친화적)
 
 ---
@@ -82,6 +83,22 @@ import { definePatternConfig } from "patternier";
 
 export const config = definePatternConfig({
   type: "fsd",
+});
+```
+
+---
+
+## 모노레포에서 사용하기
+
+루트에 `patternier.base.config.mjs`를 두고 각 패키지에서 `extends`로 상속할 수 있습니다.
+
+```js
+// packages/foo/patternier.config.mjs
+import { definePatternConfig } from "patternier";
+
+export const config = definePatternConfig({
+  extends: "../../patternier.base.config.mjs",
+  rootDir: "src",
 });
 ```
 
