@@ -40,5 +40,16 @@
   "homepage": "https://github.com/ksh5324/patternier",
   "bugs": {
     "url": "https://github.com/ksh5324/patternier/issues"
-  }
+  },
+  "keywords": [
+    "architecture",
+    "lint",
+    "linter",
+    "pattern",
+    "layer",
+    "slice",
+    "monorepo",
+    "cli",
+    "fsd"
+  ]
 }
