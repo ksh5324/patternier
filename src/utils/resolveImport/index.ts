@@ -5,21 +5,11 @@ import type { Tsconfig } from "./types";
 import fs from "node:fs/promises";
 
 async function loadTsconfig(repoRoot: string): Promise<Tsconfig | null> {
-  if (tsconfigCache.has(repoRoot)) return tsconfigCache.get(repoRoot) ?? null;
-  const tsconfigPath = path.join(repoRoot, "tsconfig.json");
-  try {
-    await fs.access(tsconfigPath);
-  } catch {
-    tsconfigCache.set(repoRoot, null);
-    return null;
-  }
-  const raw = await fs.readFile(tsconfigPath, "utf8");
-  const data = JSON.parse(raw);
-  const compilerOptions = data?.compilerOptions ?? {};
-  const baseUrl = compilerOptions.baseUrl ?? ".";
-  const paths = compilerOptions.paths ?? {};
-  const cfg = { baseUrl, paths } as Tsconfig;
-  tsconfigCache.set(repoRoot, cfg);
+  const tsconfigPath = await findNearestTsconfig(repoRoot);
+  if (!tsconfigPath) return null;
+  if (tsconfigCache.has(tsconfigPath)) return tsconfigCache.get(tsconfigPath) ?? null;
+  const cfg = await readTsconfig(tsconfigPath);
+  tsconfigCache.set(tsconfigPath, cfg);
   return cfg;
 }
 
@@ -59,3 +49,63 @@ async function resolveImportSource(
 }
 
 export { resolveImportSource };
+
+async function findNearestTsconfig(startDir: string): Promise<string | null> {
+  let current = path.resolve(startDir);
+  while (true) {
+    const candidate = path.join(current, "tsconfig.json");
+    try {
+      await fs.access(candidate);
+      return candidate;
+    } catch {}
+    const parent = path.dirname(current);
+    if (parent === current) return null;
+    current = parent;
+  }
+}
+
+async function readTsconfig(tsconfigPath: string, seen = new Set<string>()): Promise<Tsconfig> {
+  const full = path.resolve(tsconfigPath);
+  if (seen.has(full)) {
+    throw new Error(`Circular tsconfig extends detected: ${full}`);
+  }
+  seen.add(full);
+  const raw = await fs.readFile(full, "utf8");
+  const data = JSON.parse(raw);
+  const base = data?.extends ? await resolveExtendedTsconfig(data.extends, path.dirname(full), seen) : null;
+  const compilerOptions = {
+    ...(base?.compilerOptions ?? {}),
+    ...(data?.compilerOptions ?? {}),
+  };
+  const baseUrl = compilerOptions.baseUrl ?? ".";
+  const paths = compilerOptions.paths ?? {};
+  return { baseUrl, paths } as Tsconfig;
+}
+
+async function resolveExtendedTsconfig(
+  ext: string,
+  dir: string,
+  seen: Set<string>
+): Promise<any | null> {
+  const exts = ext.endsWith(".json") ? ext : ext + ".json";
+  const p = path.isAbsolute(exts) ? exts : path.join(dir, exts);
+  try {
+    await fs.access(p);
+  } catch {
+    return null;
+  }
+  const raw = await fs.readFile(p, "utf8");
+  const data = JSON.parse(raw);
+  if (data?.extends) {
+    const parent = await resolveExtendedTsconfig(data.extends, path.dirname(p), seen);
+    return {
+      ...parent,
+      ...data,
+      compilerOptions: {
+        ...(parent?.compilerOptions ?? {}),
+        ...(data?.compilerOptions ?? {}),
+      },
+    };
+  }
+  return data;
+}

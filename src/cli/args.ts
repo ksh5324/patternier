@@ -5,6 +5,7 @@ type ParsedArgs = {
   format?: string;
   help?: boolean;
   version?: boolean;
+  summary?: boolean;
   invalid?: boolean;
 };
 
@@ -16,6 +17,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let format: string | undefined;
   let help = false;
   let version = false;
+  let summary = false;
 
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
@@ -45,6 +47,10 @@ function parseArgs(argv: string[]): ParsedArgs {
       version = true;
       continue;
     }
+    if (a === "--summary") {
+      summary = true;
+      continue;
+    }
     if (a.startsWith("-")) {
       return { invalid: true };
     }
@@ -58,7 +64,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     }
   }
 
-  return { cmd, fileArg, cliType, format, help, version };
+  return { cmd, fileArg, cliType, format, help, version, summary };
 }
 
 export { parseArgs };

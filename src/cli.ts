@@ -20,7 +20,7 @@ import {
 const cwd = process.cwd();
 
 async function main() {
-  const { cmd, fileArg, cliType, format, help, version, invalid } = parseArgs(process.argv);
+  const { cmd, fileArg, cliType, format, help, version, summary, invalid } = parseArgs(process.argv);
 
   if (invalid) return usage();
   if (help) return usage();
@@ -88,6 +88,7 @@ async function main() {
     let targets: string[] = [];
     const jsonDiags: any[] = [];
     const sarifDiags: any[] = [];
+    const summaryCounts = new Map<string, number>();
 
     if (fileArg) {
       let absPath: string;
@@ -132,6 +133,8 @@ async function main() {
       if (diags.length > 0) {
         hasError = true;
         for (const d of diags) {
+          const key = d.ruleId ?? "unknown";
+          summaryCounts.set(key, (summaryCounts.get(key) ?? 0) + 1);
           if (format === "json") {
             jsonDiags.push({
               file: result.file.relPath,
@@ -159,6 +162,13 @@ async function main() {
       process.stdout.write(JSON.stringify(jsonDiags, null, 2) + "\n");
     } else if (format === "sarif") {
       process.stdout.write(JSON.stringify(buildSarif(sarifDiags), null, 2) + "\n");
+    }
+    if (summary) {
+      const total = Array.from(summaryCounts.values()).reduce((a, b) => a + b, 0);
+      process.stdout.write(`\nSummary: ${total} issues\n`);
+      for (const [ruleId, count] of summaryCounts.entries()) {
+        process.stdout.write(`- ${ruleId}: ${count}\n`);
+      }
     }
 
     process.exitCode = hasError ? 1 : 0;
