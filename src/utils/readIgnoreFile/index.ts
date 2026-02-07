@@ -1,7 +1,6 @@
-// src/utils/readIgnoreFile.ts
 import fs from "node:fs/promises";
 
-export async function readIgnoreFile(absPath: string): Promise<string[]> {
+async function readIgnoreFile(absPath: string): Promise<string[]> {
   try {
     const raw = await fs.readFile(absPath, "utf8");
     return raw
@@ -14,3 +13,5 @@ export async function readIgnoreFile(absPath: string): Promise<string[]> {
     throw e;
   }
 }
+
+export { readIgnoreFile };
