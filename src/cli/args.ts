@@ -6,6 +6,7 @@ type ParsedArgs = {
   help?: boolean;
   version?: boolean;
   summary?: boolean;
+  printConfig?: boolean;
   invalid?: boolean;
 };
 
@@ -18,6 +19,7 @@ function parseArgs(argv: string[]): ParsedArgs {
   let help = false;
   let version = false;
   let summary = false;
+  let printConfig = false;
 
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
@@ -51,6 +53,10 @@ function parseArgs(argv: string[]): ParsedArgs {
       summary = true;
       continue;
     }
+    if (a === "--print-config") {
+      printConfig = true;
+      continue;
+    }
     if (a.startsWith("-")) {
       return { invalid: true };
     }
@@ -64,7 +70,7 @@ function parseArgs(argv: string[]): ParsedArgs {
     }
   }
 
-  return { cmd, fileArg, cliType, format, help, version, summary };
+  return { cmd, fileArg, cliType, format, help, version, summary, printConfig };
 }
 
 export { parseArgs };

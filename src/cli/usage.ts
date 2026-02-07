@@ -8,6 +8,7 @@ Usage:
   patternier check [file] --format json
   patternier check [file] --format sarif
   patternier check [file] --summary
+  patternier check [file] --print-config
   patternier --help
   patternier --version
 

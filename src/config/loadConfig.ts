@@ -48,7 +48,7 @@ async function loadConfigFromFile(
   }
 
   const baseConfigs = await resolveExtends(cfg, path.dirname(fullPath), seen);
-  return mergeConfigs(baseConfigs, cfg as PatternConfig);
+  return mergeConfigs(...baseConfigs, cfg as PatternConfig);
 }
 
 async function resolveExtends(
@@ -70,12 +70,21 @@ async function resolveExtends(
 function mergeConfigs(...configs: PatternConfig[]): PatternConfig {
   const result: PatternConfig = { type: "fsd" };
   for (const cfg of configs) {
-    Object.assign(result, cfg);
-    if (cfg.layers) {
-      result.layers = { ...(result.layers ?? {}), ...cfg.layers };
+    for (const [key, value] of Object.entries(cfg)) {
+      if (value === undefined) continue;
+      if (key === "rules" && typeof value === "object" && Object.keys(value).length === 0) {
+        continue;
+      }
+      (result as any)[key] = value;
     }
-    if (cfg.rules) {
-      result.rules = { ...(result.rules ?? {}), ...cfg.rules };
+    if (cfg.layers !== undefined) {
+      result.layers = { ...(result.layers ?? {}), ...(cfg.layers ?? {}) };
+    }
+    if (cfg.rules !== undefined) {
+      const keys = Object.keys(cfg.rules ?? {});
+      if (keys.length > 0) {
+        result.rules = { ...(result.rules ?? {}), ...(cfg.rules ?? {}) };
+      }
     }
   }
   return result;

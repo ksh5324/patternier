@@ -20,7 +20,7 @@ import {
 const cwd = process.cwd();
 
 async function main() {
-  const { cmd, fileArg, cliType, format, help, version, summary, invalid } = parseArgs(process.argv);
+  const { cmd, fileArg, cliType, format, help, version, summary, printConfig, invalid } = parseArgs(process.argv);
 
   if (invalid) return usage();
   if (help) return usage();
@@ -54,6 +54,11 @@ async function main() {
   const config = await loadConfig(repoRoot);
   const effectiveType: PatternType = configExists ? config.type : (cliTypeSafe ?? config.type);
   const analysisRoot = path.join(repoRoot, config.rootDir ?? ".");
+
+  if (printConfig) {
+    process.stdout.write(JSON.stringify({ config, analysisRoot, type: effectiveType }, null, 2) + "\n");
+    return;
+  }
 
   const userIgnores = config.ignores ?? [];
   const ignoreFileMatcher = await readIgnoreFile(path.join(repoRoot, ".patternierignore"));
