@@ -8,6 +8,9 @@
   "exports": {
     ".": {
       "import": "./dist/index.js"
+    },
+    "./pattern/fsd": {
+      "import": "./dist/pattern/fsd.js"
     }
   },
   "scripts": {

@@ -1,6 +1,5 @@
 // src/entry/inspectByType.ts
 import { PatternType } from "@/config/definePatternConfig";
-import {inspectFile as inspectFsd} from "../pattern/fsd/inspect";
 
 export async function inspectByType(
   type: PatternType,
@@ -8,8 +7,13 @@ export async function inspectByType(
   ctx: { repoRoot: string; analysisRoot: string; config: any }
 ) {
   switch (type) {
-    case "fsd":
-      return inspectFsd(absPath, ctx);
-    default: return inspectFsd(absPath, ctx);
+    case "fsd": {
+      const mod = await import("../pattern/fsd/index");
+      return mod.inspectFile(absPath, ctx);
+    }
+    default: {
+      const mod = await import("../pattern/fsd/index");
+      return mod.inspectFile(absPath, ctx);
+    }
   }
 }

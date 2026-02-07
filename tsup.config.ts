@@ -4,14 +4,16 @@ import { defineConfig } from "tsup";
 export default defineConfig({
   entry: {
     cli: "src/cli.ts",
-    index: "src/index.ts"
+    index: "src/index.ts",
+    "pattern/fsd": "src/pattern/fsd/index.ts"
   },
   format: ["esm"],
   target: "node18",
   outDir: "dist",
-  sourcemap: true,
+  sourcemap: false,
   clean: true,
   dts: true,
+  minify: true,
 
   // CLI용
   banner: {
@@ -21,6 +23,7 @@ export default defineConfig({
   // node builtins / deps는 번들 안 함
   external: [
     "@swc/core",
-    "picomatch"
+    "picomatch",
+    "ignore"
   ]
 });
