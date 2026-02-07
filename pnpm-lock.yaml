@@ -14,6 +14,9 @@ importers:
       '@swc/helpers':
         specifier: ^0.5.18
         version: 0.5.18
+      ignore:
+        specifier: ^6.0.2
+        version: 6.0.2
       picomatch:
         specifier: ^4.0.3
         version: 4.0.3
@@ -484,6 +487,10 @@ packages:
   get-tsconfig@4.13.3:
     resolution: {integrity: sha512-vp8Cj/+9Q/ibZUrq1rhy8mCTQpCk31A3uu9wc1C50yAb3x2pFHOsGdAZQ7jD86ARayyxZUViYeIztW+GE8dcrg==}
 
+  ignore@6.0.2:
+    resolution: {integrity: sha512-InwqeHHN2XpumIkMvpl/DCJVrAHgCsG5+cn1XlnLWGwtZBm8QJfSusItfrwx81CTp5agNZqpKU2J/ccC5nGT4A==}
+    engines: {node: '>= 4'}
+
   joycon@3.1.1:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
     engines: {node: '>=10'}
@@ -938,6 +945,8 @@ snapshots:
   get-tsconfig@4.13.3:
     dependencies:
       resolve-pkg-maps: 1.0.0
+
+  ignore@6.0.2: {}
 
   joycon@3.1.1: {}
 
