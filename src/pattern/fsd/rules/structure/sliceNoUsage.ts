@@ -1,4 +1,4 @@
-type Loc = { line: number; col: number } | null;
+import type { Loc } from "../types";
 
 type SliceNoUsageContext = {
   file: { relPath: string; layer: string };

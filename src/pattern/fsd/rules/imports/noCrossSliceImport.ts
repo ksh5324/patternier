@@ -1,7 +1,6 @@
-// src/pattern/fsd/rules/noCrossSliceImport.ts
-import { extractTargetFromSource } from "../utils/extractTarget";
-
-type Loc = { line: number; col: number } | null;
+// src/pattern/fsd/rules/imports/noCrossSliceImport.ts
+import { extractTargetFromSource } from "../../utils/extractTarget";
+import type { Loc } from "../types";
 
 export type Diagnostic = {
   ruleId: string;

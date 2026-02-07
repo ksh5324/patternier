@@ -1,8 +1,7 @@
-// src/pattern/fsd/rules/noLayerToHigherImport.ts
-import type { LayerName } from "../utils/extractTarget";
-import { extractTargetFromSource, getLayerIndex } from "../utils/extractTarget";
-
-type Loc = { line: number; col: number } | null;
+// src/pattern/fsd/rules/imports/noLayerToHigherImport.ts
+import type { LayerName } from "../../utils/extractTarget";
+import { extractTargetFromSource, getLayerIndex } from "../../utils/extractTarget";
+import type { Loc } from "../types";
 
 export type Diagnostic = {
   ruleId: string;

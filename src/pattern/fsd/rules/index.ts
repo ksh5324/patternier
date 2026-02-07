@@ -1,11 +1,11 @@
-import { noLayerToHigherImportRule } from "./noLayerToHigherImport";
-import { noCrossSliceImportRule } from "./noCrossSliceImport";
-import { uiNoSideEffectsRule } from "./uiNoSideEffects";
-import { sliceNoUsageRule } from "./sliceNoUsage";
-import { modelNoPresentationRule } from "./modelNoPresentation";
-import { useClientOnlyUiRule } from "./useClientOnlyUi";
-import { noDeepImportRule } from "./noDeepImport";
-import { segmentNoUsageRule } from "./segmentNoUsage";
+import { noLayerToHigherImportRule } from "./imports/noLayerToHigherImport";
+import { noCrossSliceImportRule } from "./imports/noCrossSliceImport";
+import { noDeepImportRule } from "./imports/noDeepImport";
+import { sliceNoUsageRule } from "./structure/sliceNoUsage";
+import { segmentNoUsageRule } from "./structure/segmentNoUsage";
+import { uiNoSideEffectsRule } from "./ui/uiNoSideEffects";
+import { useClientOnlyUiRule } from "./ui/useClientOnlyUi";
+import { modelNoPresentationRule } from "./model/modelNoPresentation";
 import type { RuleSetting } from "@/config/rules";
 
 export type FsdRuleSettings = Partial<{

@@ -1,6 +1,5 @@
 import picomatch from "picomatch";
-
-type Loc = { line: number; col: number } | null;
+import type { Loc } from "../types";
 
 type UseClientOnlyUiContext = {
   file: { relPath: string };
